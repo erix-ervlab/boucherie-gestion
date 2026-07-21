@@ -7,10 +7,11 @@ import {
   Input,
   Space,
   Spin,
-  Tag,
   Typography,
   theme as antdTheme,
 } from "antd";
+
+import { ModeleSelect, useModele } from "../components/ModeleSelect";
 
 type Msg = { role: "user" | "assistant"; content: string; sql?: string[] };
 
@@ -27,6 +28,7 @@ export const CopilotPage = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ configure: boolean; modele: string } | null>(null);
+  const { modeles, modele, setModele } = useModele();
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export const CopilotPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
+          modele: modele || undefined,
         }),
       });
       if (!r.ok) {
@@ -141,14 +144,12 @@ export const CopilotPage = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
-      <Typography.Title level={3}>
-        <RobotOutlined /> Copilote{" "}
-        {status?.modele && (
-          <Tag color="default" style={{ verticalAlign: "middle" }}>
-            {status.modele}
-          </Tag>
-        )}
-      </Typography.Title>
+      <Space align="center" wrap style={{ marginBottom: 8 }}>
+        <Typography.Title level={3} style={{ margin: 0 }}>
+          <RobotOutlined /> Copilote
+        </Typography.Title>
+        <ModeleSelect modeles={modeles} modele={modele} setModele={setModele} />
+      </Space>
 
       {status && !status.configure && (
         <Alert

@@ -22,6 +22,8 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 
+import { ModeleSelect, useModele } from "../components/ModeleSelect";
+
 const euro = (v: any) =>
   v == null ? "—" : `${Number(v).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
@@ -33,6 +35,7 @@ export const AchatsPage = () => {
   const [saving, setSaving] = useState(false);
   const [achats, setAchats] = useState<any[]>([]);
   const timerRef = useRef<any>(null);
+  const { modeles, modele, setModele } = useModele();
 
   const { data: famData } = useList({ resource: "familles", pagination: { mode: "off" } });
   const familles = famData?.data ?? [];
@@ -72,6 +75,7 @@ export const AchatsPage = () => {
       try {
         const fd = new FormData();
         fd.append("file", opt.file);
+        if (modele) fd.append("modele", modele);
         const r = await fetch("/api/achats/extraire", { method: "POST", body: fd });
         if (!r.ok) {
           const e = await r.json().catch(() => ({}));
@@ -181,7 +185,16 @@ export const AchatsPage = () => {
     <div>
       <Typography.Title level={3}>Achats — factures fournisseurs</Typography.Title>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card
+        style={{ marginBottom: 16 }}
+        title="Importer une facture"
+        extra={
+          <Space size={6}>
+            <span style={{ fontSize: 12 }}>Modèle IA :</span>
+            <ModeleSelect modeles={modeles} modele={modele} setModele={setModele} size="small" />
+          </Space>
+        }
+      >
         <Upload.Dragger {...uploadProps} disabled={extracting}>
           <p className="ant-upload-drag-icon">
             <InboxOutlined />

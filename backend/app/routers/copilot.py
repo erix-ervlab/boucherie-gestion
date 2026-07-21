@@ -15,6 +15,7 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message]
+    modele: str | None = None
 
 
 @router.get("/status")
@@ -33,6 +34,6 @@ def chat(req: ChatRequest):
     from .. import copilot as copilot_mod
 
     try:
-        return copilot_mod.chat([m.model_dump() for m in req.messages])
+        return copilot_mod.chat([m.model_dump() for m in req.messages], req.modele)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Erreur copilote : {e}")

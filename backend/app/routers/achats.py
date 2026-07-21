@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -86,7 +86,11 @@ def _resoudre_fournisseur(db: Session, payload: AchatIn) -> Fournisseur | None:
 
 
 @router.post("/extraire")
-async def extraire(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def extraire(
+    file: UploadFile = File(...),
+    modele: str | None = Form(None),
+    db: Session = Depends(get_db),
+):
     """Lecture IA d'une facture PDF. Renvoie un brouillon (non enregistré)."""
     if not settings.anthropic_api_key:
         raise HTTPException(503, "Lecture IA indisponible : ANTHROPIC_API_KEY absente.")
@@ -94,7 +98,7 @@ async def extraire(file: UploadFile = File(...), db: Session = Depends(get_db)):
     from ..importers import facture as facture_mod  # import différé (SDK anthropic)
 
     try:
-        return facture_mod.extraire(db, content, file.filename or "facture.pdf")
+        return facture_mod.extraire(db, content, file.filename or "facture.pdf", modele)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(500, f"Échec de la lecture IA : {e}")
 

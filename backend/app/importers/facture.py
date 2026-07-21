@@ -16,6 +16,7 @@ import anthropic
 from sqlalchemy.orm import Session
 
 from ..config import settings
+from ..modeles import resoudre
 from ..models import CorrespondanceFournisseur, Fournisseur
 
 _client = anthropic.Anthropic()  # lit ANTHROPIC_API_KEY dans l'environnement
@@ -112,10 +113,12 @@ def _match_fournisseur(db: Session, nom: str) -> Fournisseur | None:
     return None
 
 
-def extraire(db: Session, file_bytes: bytes, fichier_nom: str) -> dict:
+def extraire(
+    db: Session, file_bytes: bytes, fichier_nom: str, modele: str | None = None
+) -> dict:
     b64 = base64.standard_b64encode(file_bytes).decode("ascii")
     resp = _client.messages.create(
-        model=settings.copilot_model,
+        model=resoudre(modele),
         max_tokens=8000,
         system=EXTRACT_SYSTEM,
         output_config={"format": {"type": "json_schema", "schema": FACTURE_SCHEMA}},

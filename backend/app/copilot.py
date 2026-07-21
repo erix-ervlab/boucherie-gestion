@@ -21,6 +21,7 @@ import anthropic
 from sqlalchemy import create_engine, text
 
 from .config import settings
+from .modeles import kwargs_reflexion, resoudre
 
 _engine = create_engine(
     settings.copilot_database_url,
@@ -122,9 +123,10 @@ def run_sql(sql: str) -> str:
     return txt
 
 
-def chat(messages: list[dict]) -> dict:
+def chat(messages: list[dict], modele: str | None = None) -> dict:
     """Boucle agent : messages = historique [{role, content(str)}]. Renvoie la
     réponse finale + la liste des requêtes SQL exécutées (transparence)."""
+    model = resoudre(modele)
     convo: list[dict] = [
         {"role": m["role"], "content": m["content"]} for m in messages
     ]
@@ -132,13 +134,12 @@ def chat(messages: list[dict]) -> dict:
 
     for _ in range(MAX_STEPS):
         resp = _client.messages.create(
-            model=settings.copilot_model,
+            model=model,
             max_tokens=8000,
             system=SYSTEM,
-            thinking={"type": "adaptive"},
-            output_config={"effort": "medium"},
             tools=[SQL_TOOL],
             messages=convo,
+            **kwargs_reflexion(model),
         )
 
         if resp.stop_reason == "tool_use":
@@ -159,9 +160,10 @@ def chat(messages: list[dict]) -> dict:
             continue
 
         texte = "".join(b.text for b in resp.content if b.type == "text")
-        return {"reponse": texte, "requetes_sql": requetes}
+        return {"reponse": texte, "requetes_sql": requetes, "modele": model}
 
     return {
         "reponse": "Désolé, je n'ai pas réussi à conclure en un nombre raisonnable d'étapes.",
         "requetes_sql": requetes,
+        "modele": model,
     }
