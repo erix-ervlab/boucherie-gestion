@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: Boucherie Postgres
+    uid: boucherie-pg
+    type: postgres
+    access: proxy
+    url: db:5432
+    database: boucherie
+    user: grafana_ro
+    isDefault: true
+    editable: true
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1700
+    secureJsonData:
+      password: ${GRAFANA_DB_PASSWORD}

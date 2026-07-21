@@ -1,0 +1,78 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "schemaVersion": 39,
+  "version": 1,
+  "title": "Boucherie — Ventes (exemple)",
+  "uid": "boucherie-ventes",
+  "tags": ["boucherie"],
+  "timezone": "browser",
+  "time": { "from": "2026-07-01T00:00:00.000Z", "to": "2026-07-31T23:59:59.000Z" },
+  "refresh": "",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Chiffre d'affaires (période)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(montant), 0) AS \"CA\" FROM vente_ligne WHERE annule = false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CA par jour",
+      "gridPos": { "h": 9, "w": 18, "x": 6, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "custom": { "drawStyle": "bars", "fillOpacity": 40, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_vente::timestamp AS \"time\", SUM(montant) AS \"CA\" FROM vente_ligne WHERE annule = false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "CA par famille",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" }, "overrides": [] },
+      "options": { "orientation": "horizontal", "xTickLabelRotation": 0, "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(f.nom, 'Prix libre / autre') AS \"famille\", SUM(v.montant) AS \"CA\" FROM vente_ligne v LEFT JOIN produit p ON p.code_plu = v.n_plu LEFT JOIN famille f ON f.id = p.famille_id WHERE v.annule = false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC"
+        }
+      ]
+    }
+  ]
+}

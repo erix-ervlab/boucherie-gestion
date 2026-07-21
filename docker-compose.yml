@@ -5,8 +5,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-boucherie}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-boucherie}
       POSTGRES_DB: ${POSTGRES_DB:-boucherie}
+      # Mot de passe de l'utilisateur lecture seule créé pour Grafana
+      # (utilisé par le script d'init sur une base vierge).
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-grafana_ro}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/initdb:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -36,5 +40,28 @@ services:
       - "80:80"
     restart: unless-stopped
 
+  # Grafana : exploration libre des données (SQL ad hoc, dashboards
+  # perso) sans toucher au code. Branché en LECTURE SEULE sur Postgres.
+  grafana:
+    image: grafana/grafana:11.3.1
+    depends_on:
+      - db
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # Interpolé dans la datasource provisionnée.
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-grafana_ro}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  grafana-data:

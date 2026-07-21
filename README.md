@@ -24,8 +24,28 @@ cp .env.example .env        # adapter le mot de passe
 docker compose up --build
 ```
 
+- Front : http://localhost/ (nginx)
 - API : http://localhost:8000 — doc interactive : http://localhost:8000/docs
-- Santé : http://localhost:8000/health
+- Grafana : http://localhost:3000 (exploration SQL libre, lecture seule)
+
+## Grafana (exploration libre)
+
+Service `grafana` branché en **lecture seule** sur Postgres (rôle
+`grafana_ro`, `SELECT` uniquement). La datasource et un dashboard
+d'exemple sont provisionnés automatiquement (`grafana/`).
+
+Sur une base **déjà initialisée** (le script `db/initdb/` ne tourne
+qu'au 1er init d'un volume vierge), créer le rôle à la main une fois :
+
+```bash
+docker compose exec -T db psql -U boucherie -d boucherie <<'SQL'
+CREATE ROLE grafana_ro LOGIN PASSWORD 'le-mot-de-passe';
+GRANT CONNECT ON DATABASE boucherie TO grafana_ro;
+GRANT USAGE ON SCHEMA public TO grafana_ro;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafana_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO grafana_ro;
+SQL
+```
 
 ## Ce qui est en place (Étape 1 — en cours)
 
