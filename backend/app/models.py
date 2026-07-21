@@ -164,3 +164,87 @@ class VenteLigne(Base):
     # Conservé pour audit fiscal, mais JAMAIS compté dans le CA/kg.
     annule: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     import_id: Mapped[int | None] = mapped_column(ForeignKey("import_journal.id"))
+
+
+# =============================================================================
+# ACHATS (Étapes 3 & 5) — factures fournisseurs + table de correspondance
+# apprenante (référence fournisseur -> famille/sous-famille).
+# =============================================================================
+
+
+class CorrespondanceFournisseur(Base):
+    """Mémorise l'affectation famille d'une référence fournisseur.
+
+    Cœur du système d'apprentissage : une fois validée, la ligne d'achat
+    de cette référence est pré-affectée automatiquement la fois suivante.
+    """
+
+    __tablename__ = "correspondance_fournisseur"
+    __table_args__ = (
+        UniqueConstraint(
+            "fournisseur_id", "reference_fournisseur", name="uq_correspondance"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    fournisseur_id: Mapped[int] = mapped_column(
+        ForeignKey("fournisseur.id", ondelete="CASCADE"), index=True
+    )
+    reference_fournisseur: Mapped[str] = mapped_column(String(64), index=True)
+    designation: Mapped[str | None] = mapped_column(String(200))  # dernière vue
+    famille_id: Mapped[int | None] = mapped_column(ForeignKey("famille.id"))
+    sous_famille_id: Mapped[int | None] = mapped_column(ForeignKey("sous_famille.id"))
+
+
+class Achat(Base):
+    """Une facture fournisseur."""
+
+    __tablename__ = "achat"
+    __table_args__ = (
+        UniqueConstraint("fournisseur_id", "numero_facture", name="uq_achat_facture"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    fournisseur_id: Mapped[int] = mapped_column(ForeignKey("fournisseur.id"), index=True)
+    numero_facture: Mapped[str] = mapped_column(String(64))
+    date_facture: Mapped[date | None] = mapped_column(Date, index=True)
+    montant_ht: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    montant_tva: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    montant_ttc: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    fichier_nom: Mapped[str | None] = mapped_column(String(255))
+    statut: Mapped[str] = mapped_column(String(16), default="valide", server_default="valide")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    lignes: Mapped[list["AchatLigne"]] = relationship(
+        back_populates="achat", cascade="all, delete-orphan"
+    )
+
+
+class AchatLigne(Base):
+    """Une ligne d'une facture fournisseur (produit ou frais)."""
+
+    __tablename__ = "achat_ligne"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    achat_id: Mapped[int] = mapped_column(
+        ForeignKey("achat.id", ondelete="CASCADE"), index=True
+    )
+    reference_fournisseur: Mapped[str | None] = mapped_column(String(64), index=True)
+    designation: Mapped[str] = mapped_column(String(200))
+    quantite: Mapped[Decimal | None] = mapped_column(Numeric(12, 3))
+    poids_kg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3))
+    unite: Mapped[str | None] = mapped_column(String(16))  # « Kg » / « Pce »
+    prix_unitaire: Mapped[Decimal | None] = mapped_column(Numeric(12, 4))
+    montant_ht: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    taux_tva: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    numero_lot: Mapped[str | None] = mapped_column(String(64))
+    origine: Mapped[str | None] = mapped_column(String(300))
+    # False pour les frais de port, cotisations Interbev/CVO, taxes… (pas de la
+    # marchandise). Ces lignes ne comptent pas comme coût matière produit.
+    est_produit: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    famille_id: Mapped[int | None] = mapped_column(ForeignKey("famille.id"))
+    sous_famille_id: Mapped[int | None] = mapped_column(ForeignKey("sous_famille.id"))
+
+    achat: Mapped[Achat] = relationship(back_populates="lignes")

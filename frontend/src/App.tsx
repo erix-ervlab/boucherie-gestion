@@ -5,6 +5,7 @@ import {
   TeamOutlined,
   UploadOutlined,
   RobotOutlined,
+  ContainerOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -26,6 +27,7 @@ import { Header } from "./components/Header";
 import { ThemeProvider } from "./theme";
 import { Dashboard } from "./pages/dashboard";
 import { CopilotPage } from "./pages/copilot";
+import { AchatsPage } from "./pages/achats";
 import { ImportsPage } from "./pages/imports";
 import { ProduitCreate, ProduitEdit, ProduitList } from "./pages/produits";
 import { FamilleCreate, FamilleEdit, FamilleList } from "./pages/familles";
@@ -56,6 +58,11 @@ function App() {
                 name: "copilot",
                 list: "/copilot",
                 meta: { label: "Copilote", icon: <RobotOutlined /> },
+              },
+              {
+                name: "achats",
+                list: "/achats",
+                meta: { label: "Achats", icon: <ContainerOutlined /> },
               },
               {
                 name: "imports",
@@ -108,6 +115,7 @@ function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="/copilot" element={<CopilotPage />} />
+                <Route path="/achats" element={<AchatsPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/produits">
                   <Route index element={<ProduitList />} />
