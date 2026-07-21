@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
+from ..journal import enregistrer
 from ..models import Achat, AchatLigne, CorrespondanceFournisseur, Fournisseur
 
 router = APIRouter(prefix="/achats", tags=["achats"])
@@ -138,6 +139,16 @@ def creer(payload: AchatIn, db: Session = Depends(get_db)):
 
     appris = _apprendre(db, fournisseur.id, payload.lignes)
 
+    enregistrer(
+        db,
+        "création",
+        "achat",
+        f"Facture {fournisseur.nom} n°{payload.numero_facture} — "
+        f"{(payload.montant_ttc or 0):.2f} € — {len(achat.lignes)} lignes",
+        entite_id=achat.id,
+        details={"correspondances_apprises": appris},
+    )
+
     db.commit()
     db.refresh(achat)
     return {
@@ -193,6 +204,16 @@ def modifier(achat_id: int, payload: AchatIn, db: Session = Depends(get_db)):
     db.flush()
 
     appris = _apprendre(db, fournisseur.id, payload.lignes)
+
+    enregistrer(
+        db,
+        "modification",
+        "achat",
+        f"Facture {fournisseur.nom} n°{payload.numero_facture} modifiée — "
+        f"{(payload.montant_ttc or 0):.2f} € — {len(achat.lignes)} lignes",
+        entite_id=achat.id,
+        details={"correspondances_apprises": appris},
+    )
 
     db.commit()
     db.refresh(achat)
@@ -268,6 +289,11 @@ def supprimer(achat_id: int, db: Session = Depends(get_db)):
     a = db.get(Achat, achat_id)
     if a is None:
         raise HTTPException(404, "Achat introuvable")
+    f = db.get(Fournisseur, a.fournisseur_id)
+    libelle = f"Facture {f.nom if f else '?'} n°{a.numero_facture} supprimée"
+    if a.montant_ttc is not None:
+        libelle += f" — {float(a.montant_ttc):.2f} €"
+    enregistrer(db, "suppression", "achat", libelle, entite_id=achat_id)
     db.delete(a)
     db.commit()
     return {"supprime": achat_id}

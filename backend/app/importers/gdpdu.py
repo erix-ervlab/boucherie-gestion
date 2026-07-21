@@ -218,5 +218,18 @@ def import_ventes(db: Session, file_bytes: bytes, fichier_nom: str) -> ImportRes
         z_max=result.z_max,
     )
     db.add(journal)
+
+    from ..journal import enregistrer
+
+    enregistrer(
+        db,
+        "import",
+        "ventes",
+        f"Import ventes « {fichier_nom} » : {result.nb_lignes_ajoutees} lignes ajoutées, "
+        f"{result.nb_lignes_deja_connues} déjà connues"
+        + (f", {len(trous)} trou(s) de Z" if trous else ""),
+        details={"z_min": result.z_min, "z_max": result.z_max},
+    )
+
     db.commit()
     return result

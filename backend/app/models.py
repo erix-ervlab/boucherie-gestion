@@ -248,3 +248,23 @@ class AchatLigne(Base):
     sous_famille_id: Mapped[int | None] = mapped_column(ForeignKey("sous_famille.id"))
 
     achat: Mapped[Achat] = relationship(back_populates="lignes")
+
+
+# =============================================================================
+# JOURNAL D'AUDIT — trace persistante des opérations (création/modification/
+# suppression de factures, imports). Survit aux redéploiements.
+# =============================================================================
+
+
+class JournalOperation(Base):
+    __tablename__ = "journal_operation"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    horodatage: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+    action: Mapped[str] = mapped_column(String(24))  # création / modification / suppression / import
+    entite: Mapped[str] = mapped_column(String(24), index=True)  # achat / ventes / catalogue
+    entite_id: Mapped[int | None] = mapped_column(Integer)
+    libelle: Mapped[str] = mapped_column(String(300))
+    details: Mapped[str | None] = mapped_column(Text)  # JSON optionnel

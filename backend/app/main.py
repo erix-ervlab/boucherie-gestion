@@ -11,7 +11,7 @@ from . import models, schemas
 from .config import settings
 from .crud import make_crud_router
 from .db import engine
-from .routers import achats, copilot, imports, marge, modeles, ventes
+from .routers import achats, copilot, imports, journal, marge, modeles, ventes
 
 app = FastAPI(title="Boucherie de l'Abbatiale — Gestion", version="0.1.0")
 
@@ -85,6 +85,9 @@ app.include_router(achats.router)
 
 # --- Marge par famille ---
 app.include_router(marge.router)
+
+# --- Journal d'audit ---
+app.include_router(journal.router)
 
 # --- Copilote IA ---
 app.include_router(copilot.router)

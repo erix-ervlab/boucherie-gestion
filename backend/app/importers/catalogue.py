@@ -125,5 +125,15 @@ def import_catalogue(db: Session, file_bytes: bytes, fichier_nom: str) -> Catalo
     result.produits_ajoutes = after - before
     result.produits_maj = len(produits) - result.produits_ajoutes
 
+    from ..journal import enregistrer
+
+    enregistrer(
+        db,
+        "import",
+        "catalogue",
+        f"Import catalogue : {result.familles} familles, "
+        f"{result.produits_ajoutes} produits ajoutés, {result.produits_maj} mis à jour",
+    )
+
     db.commit()
     return result
