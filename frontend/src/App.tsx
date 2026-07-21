@@ -9,6 +9,7 @@ import {
   PercentageOutlined,
   HistoryOutlined,
   LinkOutlined,
+  AreaChartOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -33,6 +34,7 @@ import { CopilotPage } from "./pages/copilot";
 import { AchatsPage } from "./pages/achats";
 import { MargePage } from "./pages/marge";
 import { HistoriquePage } from "./pages/historique";
+import { GrafanaPage } from "./pages/grafana";
 import { ImportsPage } from "./pages/imports";
 import { ProduitCreate, ProduitEdit, ProduitList } from "./pages/produits";
 import { FamilleCreate, FamilleEdit, FamilleList } from "./pages/familles";
@@ -88,6 +90,14 @@ function App() {
                 name: "historique",
                 list: "/historique",
                 meta: { label: "Historique", icon: <HistoryOutlined /> },
+              },
+              {
+                name: "exploration",
+                list: "/exploration",
+                meta: {
+                  label: "Exploration (Grafana)",
+                  icon: <AreaChartOutlined />,
+                },
               },
               {
                 name: "produits",
@@ -146,6 +156,7 @@ function App() {
                 <Route path="/marge" element={<MargePage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/historique" element={<HistoriquePage />} />
+                <Route path="/exploration" element={<GrafanaPage />} />
                 <Route path="/produits">
                   <Route index element={<ProduitList />} />
                   <Route path="create" element={<ProduitCreate />} />

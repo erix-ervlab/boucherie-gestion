@@ -56,14 +56,25 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # Servi derrière le nginx du front, sous le sous-chemin /grafana/
+      # (même origine -> un seul hostname pour Cloudflare, pas de port 3000).
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost/grafana/}
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      # Autorise l'intégration en iframe dans l'app (même origine).
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      # Lecture anonyme (rôle Viewer) : les tableaux s'affichent dans l'app
+      # sans double authentification. La base est déjà en lecture seule
+      # (grafana_ro). L'admin garde son login pour éditer/sauvegarder.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_USERS_VIEWERS_CAN_EDIT: "true"
       # Interpolé dans la datasource provisionnée.
       GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-grafana_ro}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
-    ports:
-      - "3000:3000"
+    # Plus de port 3000 exposé : Grafana passe par https://<domaine>/grafana/.
     restart: unless-stopped
 
 volumes:
