@@ -1,10 +1,13 @@
 """Lecture IA d'une facture fournisseur PDF (Claude + sortie structurée).
 
 Claude lit le PDF et renvoie les lignes au format JSON (schéma imposé via
-`output_config.format`). On rapproche ensuite le fournisseur et on
-pré-affecte les familles connues via la table de correspondance
-apprenante. Le résultat est un BROUILLON à vérifier/corriger par un
-humain avant enregistrement (cf. cahier §4.2 — vérification obligatoire).
+`output_config.format`). Pour chaque ligne produit, deux niveaux de
+pré-affectation de la famille :
+  1. la **correspondance apprise** (réf fournisseur -> famille) si elle
+     existe -> marquée `connu` (fiable) ;
+  2. sinon, une **suggestion de l'IA** d'après la désignation, piochée
+     dans la liste des familles existantes -> marquée `suggere`.
+Le résultat reste un BROUILLON à vérifier/corriger par un humain.
 """
 
 from __future__ import annotations
@@ -15,9 +18,8 @@ import json
 import anthropic
 from sqlalchemy.orm import Session
 
-from ..config import settings
 from ..modeles import resoudre
-from ..models import CorrespondanceFournisseur, Fournisseur
+from ..models import CorrespondanceFournisseur, Famille, Fournisseur
 
 _client = anthropic.Anthropic()  # lit ANTHROPIC_API_KEY dans l'environnement
 
@@ -44,62 +46,70 @@ Consignes :
     **false** pour tout ce qui n'est pas de la marchandise : participation/frais
     de port, cotisations Interbev, CVO, surcoût gasoil, redevance sanitaire,
     contributions diverses, taxes.
+  - `famille_suggeree` : la famille la plus probable de l'article, PARMI la
+    liste de familles fournie ci-dessous, d'après la désignation (ex.
+    « AIGUILLETTE DE POULET » -> Volaille, « CÔTE DE BŒUF » -> Bœuf,
+    « JAMBON » -> Charcuterie ou Porc selon le cas). Mets « Aucune » si tu
+    hésites vraiment ou pour une ligne non-produit (frais).
 - N'invente aucune valeur : mets null si une information est absente.
 """
 
-_LIGNE_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "reference": {"type": "string"},
-        "designation": {"type": "string"},
-        "quantite": {"type": ["number", "null"]},
-        "poids_kg": {"type": ["number", "null"]},
-        "unite": {"type": ["string", "null"]},
-        "prix_unitaire": {"type": ["number", "null"]},
-        "montant_ht": {"type": "number"},
-        "taux_tva": {"type": ["number", "null"]},
-        "numero_lot": {"type": ["string", "null"]},
-        "origine": {"type": ["string", "null"]},
-        "est_produit": {"type": "boolean"},
-    },
-    "required": [
-        "reference",
-        "designation",
-        "quantite",
-        "poids_kg",
-        "unite",
-        "prix_unitaire",
-        "montant_ht",
-        "taux_tva",
-        "numero_lot",
-        "origine",
-        "est_produit",
-    ],
-}
 
-FACTURE_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "fournisseur": {"type": "string"},
-        "numero_facture": {"type": "string"},
-        "date_facture": {"type": "string"},
-        "montant_ht": {"type": ["number", "null"]},
-        "montant_tva": {"type": ["number", "null"]},
-        "montant_ttc": {"type": ["number", "null"]},
-        "lignes": {"type": "array", "items": _LIGNE_SCHEMA},
-    },
-    "required": [
-        "fournisseur",
-        "numero_facture",
-        "date_facture",
-        "montant_ht",
-        "montant_tva",
-        "montant_ttc",
-        "lignes",
-    ],
-}
+def _construire_schema(noms_familles: list[str]) -> dict:
+    ligne = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "reference": {"type": "string"},
+            "designation": {"type": "string"},
+            "quantite": {"type": ["number", "null"]},
+            "poids_kg": {"type": ["number", "null"]},
+            "unite": {"type": ["string", "null"]},
+            "prix_unitaire": {"type": ["number", "null"]},
+            "montant_ht": {"type": "number"},
+            "taux_tva": {"type": ["number", "null"]},
+            "numero_lot": {"type": ["string", "null"]},
+            "origine": {"type": ["string", "null"]},
+            "est_produit": {"type": "boolean"},
+            "famille_suggeree": {"type": "string", "enum": noms_familles + ["Aucune"]},
+        },
+        "required": [
+            "reference",
+            "designation",
+            "quantite",
+            "poids_kg",
+            "unite",
+            "prix_unitaire",
+            "montant_ht",
+            "taux_tva",
+            "numero_lot",
+            "origine",
+            "est_produit",
+            "famille_suggeree",
+        ],
+    }
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "fournisseur": {"type": "string"},
+            "numero_facture": {"type": "string"},
+            "date_facture": {"type": "string"},
+            "montant_ht": {"type": ["number", "null"]},
+            "montant_tva": {"type": ["number", "null"]},
+            "montant_ttc": {"type": ["number", "null"]},
+            "lignes": {"type": "array", "items": ligne},
+        },
+        "required": [
+            "fournisseur",
+            "numero_facture",
+            "date_facture",
+            "montant_ht",
+            "montant_tva",
+            "montant_ttc",
+            "lignes",
+        ],
+    }
 
 
 def _match_fournisseur(db: Session, nom: str) -> Fournisseur | None:
@@ -116,12 +126,24 @@ def _match_fournisseur(db: Session, nom: str) -> Fournisseur | None:
 def extraire(
     db: Session, file_bytes: bytes, fichier_nom: str, modele: str | None = None
 ) -> dict:
+    familles = db.query(Famille).order_by(Famille.nom).all()
+    noms = [f.nom for f in familles]
+    nom_to_id = {f.nom.strip().lower(): f.id for f in familles}
+
+    schema = _construire_schema(noms)
+    system = (
+        EXTRACT_SYSTEM
+        + "\n\nFamilles disponibles pour `famille_suggeree` : "
+        + ", ".join(noms)
+        + "."
+    )
+
     b64 = base64.standard_b64encode(file_bytes).decode("ascii")
     resp = _client.messages.create(
         model=resoudre(modele),
         max_tokens=8000,
-        system=EXTRACT_SYSTEM,
-        output_config={"format": {"type": "json_schema", "schema": FACTURE_SCHEMA}},
+        system=system,
+        output_config={"format": {"type": "json_schema", "schema": schema}},
         messages=[
             {
                 "role": "user",
@@ -142,7 +164,7 @@ def extraire(
     texte = "".join(b.text for b in resp.content if b.type == "text")
     data = json.loads(texte)
 
-    # Rapprochement fournisseur + pré-affectation des familles connues.
+    # Rapprochement fournisseur.
     fournisseur = _match_fournisseur(db, data.get("fournisseur", ""))
     data["fournisseur_id"] = fournisseur.id if fournisseur else None
 
@@ -155,9 +177,18 @@ def extraire(
 
     for ligne in data.get("lignes", []):
         c = corr.get(ligne.get("reference"))
-        ligne["famille_id"] = c.famille_id if c else None
-        ligne["sous_famille_id"] = c.sous_famille_id if c else None
-        ligne["connu"] = bool(c)  # affectation déjà mémorisée ?
+        if c:  # affectation déjà apprise pour ce fournisseur -> fiable
+            ligne["famille_id"] = c.famille_id
+            ligne["sous_famille_id"] = c.sous_famille_id
+            ligne["connu"] = True
+            ligne["suggere"] = False
+        else:  # sinon, suggestion de l'IA d'après la désignation
+            sug = (ligne.get("famille_suggeree") or "").strip()
+            fid = nom_to_id.get(sug.lower()) if sug and sug.lower() != "aucune" else None
+            ligne["famille_id"] = fid
+            ligne["sous_famille_id"] = None
+            ligne["connu"] = False
+            ligne["suggere"] = bool(fid)
 
     data["fichier_nom"] = fichier_nom
     return data

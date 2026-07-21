@@ -324,7 +324,12 @@ export const AchatsPage = () => {
                 dataIndex: "designation",
                 render: (v: string, r: any) => (
                   <span>
-                    {v} {r.connu && <Tag color="green">connu</Tag>}
+                    {v}{" "}
+                    {r.connu ? (
+                      <Tag color="green">appris</Tag>
+                    ) : r.suggere ? (
+                      <Tag color="blue">suggéré</Tag>
+                    ) : null}
                   </span>
                 ),
               },
