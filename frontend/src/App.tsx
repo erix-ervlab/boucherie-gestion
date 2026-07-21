@@ -4,6 +4,7 @@ import {
   AppstoreOutlined,
   TeamOutlined,
   UploadOutlined,
+  RobotOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -24,6 +25,7 @@ import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { Header } from "./components/Header";
 import { ThemeProvider } from "./theme";
 import { Dashboard } from "./pages/dashboard";
+import { CopilotPage } from "./pages/copilot";
 import { ImportsPage } from "./pages/imports";
 import { ProduitCreate, ProduitEdit, ProduitList } from "./pages/produits";
 import { FamilleCreate, FamilleEdit, FamilleList } from "./pages/familles";
@@ -49,6 +51,11 @@ function App() {
                 name: "dashboard",
                 list: "/",
                 meta: { label: "Tableau de bord", icon: <DashboardOutlined /> },
+              },
+              {
+                name: "copilot",
+                list: "/copilot",
+                meta: { label: "Copilote", icon: <RobotOutlined /> },
               },
               {
                 name: "imports",
@@ -100,6 +107,7 @@ function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="/copilot" element={<CopilotPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/produits">
                   <Route index element={<ProduitList />} />

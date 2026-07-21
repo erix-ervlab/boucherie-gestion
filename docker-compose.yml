@@ -25,6 +25,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-boucherie}:${POSTGRES_PASSWORD:-boucherie}@db:5432/${POSTGRES_DB:-boucherie}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # Copilote IA : clé Claude + connexion Postgres LECTURE SEULE (grafana_ro)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      COPILOT_MODEL: ${COPILOT_MODEL:-claude-opus-4-8}
+      COPILOT_DATABASE_URL: postgresql+psycopg://grafana_ro:${GRAFANA_DB_PASSWORD:-grafana_ro}@db:5432/${POSTGRES_DB:-boucherie}
     depends_on:
       db:
         condition: service_healthy
