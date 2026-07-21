@@ -28,7 +28,13 @@ services:
       - "8000:8000"
     restart: unless-stopped
 
-  # frontend : ajouté à l'étape 2 (Refine). Voir frontend/README.md.
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
 
 volumes:
   pgdata:

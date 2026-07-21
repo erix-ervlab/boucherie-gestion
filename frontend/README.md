@@ -1,17 +1,31 @@
-# Frontend — Refine (à venir, étape 2)
+# Frontend — Refine + Ant Design
 
-Le front n'est pas encore initialisé. Il sera un projet **Refine**
-(React) branché sur l'API FastAPI via le data-provider `simple-rest`
-(le backend expose déjà les conventions attendues : pagination
-`_start`/`_end`, tri `_sort`/`_order`, en-tête `X-Total-Count`).
+Interface d'administration de la boucherie (React + [Refine](https://refine.dev)
++ Ant Design), branchée sur l'API FastAPI via le data-provider
+`simple-rest`.
 
-## Initialisation prévue
+## Écrans
+
+- **Tableau de bord** (`/`) : CA, kg, tickets, PLU vendus, CA par jour et
+  par vendeur (endpoints `/ventes/stats`, `/par-jour`, `/par-vendeur`).
+- **Import caisse** (`/imports`) : dépôt du CSV GDPdU et de l'Excel
+  catalogue (glisser-déposer) + journal des imports.
+- **CRUD** : Produits (PLU), Familles, Fournisseurs.
+
+## Architecture de déploiement
+
+Servi par **nginx** (image docker-compose `frontend`, port 80) qui :
+- sert le build statique de Vite,
+- proxifie `/api/*` vers le service `backend` → **même origine, pas de CORS**.
+
+Le data-provider pointe donc sur `/api` (chemin relatif).
+
+## Développement local
 
 ```bash
-npm create refine-app@latest frontend
-# Choix : Vite · REST (simple-rest) · Ant Design (ou Material UI)
+npm install
+npm run dev   # Vite sur :5173, proxy /api -> http://localhost:8000
 ```
 
-Puis pointer le data-provider sur `http://localhost:8000` et déclarer
-les ressources : `familles`, `sous-familles`, `fournisseurs`,
-`produits`, `imports`.
+> ⚠️ L'exécution/déploiement se fait sur la VM Proxmox (`boucherie-01`),
+> pas en local — le build a lieu dans l'image Docker (`Dockerfile`).
