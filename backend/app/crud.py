@@ -8,6 +8,8 @@ Le data-provider `@refinedev/simple-rest` attend :
 `make_crud_router` évite de réécrire ces cinq endpoints par ressource.
 """
 
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Type
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -16,6 +18,35 @@ from sqlalchemy.orm import Session
 from .db import get_db
 
 _RESERVED = {"_start", "_end", "_sort", "_order"}
+
+
+def _coerce(column, value: str):
+    """Convertit une valeur de filtre (toujours str en query-string) vers le
+    type Python de la colonne, sinon la comparaison SQL échoue sur les
+    colonnes non-texte (ex. `famille_id` entier vs '1' varchar).
+
+    Retourne (ok, valeur_convertie) ; ok=False si la valeur est invalide.
+    """
+    try:
+        pytype = column.type.python_type
+    except (NotImplementedError, AttributeError):
+        return True, value
+    try:
+        if pytype is bool:
+            return True, value.strip().lower() in ("true", "1", "yes", "on")
+        if pytype is int:
+            return True, int(value)
+        if pytype is float:
+            return True, float(value)
+        if pytype is Decimal:
+            return True, Decimal(value)
+        if pytype is date:
+            return True, date.fromisoformat(value)
+        if pytype is datetime:
+            return True, datetime.fromisoformat(value)
+    except (ValueError, InvalidOperation):
+        return False, None
+    return True, value
 
 
 def make_crud_router(
@@ -41,12 +72,18 @@ def make_crud_router(
     ):
         query = db.query(model)
 
-        # Filtres d'égalité sur les colonnes existantes du modèle.
+        # Filtres d'égalité sur les colonnes existantes du modèle (avec
+        # conversion de type : les query-params sont toujours des str).
         for key, value in request.query_params.items():
             if key in _RESERVED:
                 continue
-            if hasattr(model, key):
-                query = query.filter(getattr(model, key) == value)
+            column = getattr(model, key, None)
+            if column is None or not hasattr(column, "type"):
+                continue
+            ok, coerced = _coerce(column, value)
+            if not ok:
+                continue
+            query = query.filter(column == coerced)
 
         total = query.count()
 
