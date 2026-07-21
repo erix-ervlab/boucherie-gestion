@@ -3,6 +3,7 @@ import { InboxOutlined } from "@ant-design/icons";
 import { useList } from "@refinedev/core";
 import {
   Alert,
+  AutoComplete,
   Button,
   Card,
   DatePicker,
@@ -36,6 +37,9 @@ export const AchatsPage = () => {
   const { data: famData } = useList({ resource: "familles", pagination: { mode: "off" } });
   const familles = famData?.data ?? [];
   const famOptions = familles.map((f: any) => ({ label: f.nom, value: f.id }));
+
+  const { data: fourData } = useList({ resource: "fournisseurs", pagination: { mode: "off" } });
+  const fournisseurs = fourData?.data ?? [];
 
   const loadAchats = () =>
     fetch("/api/achats")
@@ -231,13 +235,32 @@ export const AchatsPage = () => {
             </Space>
           }
         >
-          <Space wrap style={{ marginBottom: 12 }}>
-            <Input
-              addonBefore="Fournisseur"
+          <Space wrap style={{ marginBottom: 12 }} align="center">
+            <span>Fournisseur</span>
+            <AutoComplete
+              style={{ width: 240 }}
               value={draft.fournisseur}
-              onChange={(e) => setDraft({ ...draft, fournisseur: e.target.value })}
-              style={{ width: 280 }}
+              options={fournisseurs.map((f: any) => ({ value: f.nom }))}
+              filterOption={(input, opt) =>
+                String(opt?.value ?? "").toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={(val) => {
+                const match = fournisseurs.find(
+                  (f: any) => f.nom.toLowerCase() === String(val).trim().toLowerCase(),
+                );
+                setDraft((d: any) => ({
+                  ...d,
+                  fournisseur: val,
+                  fournisseur_id: match ? match.id : null,
+                }));
+              }}
+              placeholder="Nom du fournisseur"
             />
+            {draft.fournisseur_id ? (
+              <Tag color="green">existant</Tag>
+            ) : (
+              <Tag color="blue">nouveau</Tag>
+            )}
             <Input
               addonBefore="N° facture"
               value={draft.numero_facture}
