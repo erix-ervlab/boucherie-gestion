@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useList } from "@refinedev/core";
 import {
   Create,
@@ -16,19 +17,50 @@ const UNITES = [
   { label: "Pièce", value: "Pièce" },
 ];
 
-const useFamilleMap = () => {
-  const { data } = useList({ resource: "familles", pagination: { mode: "off" } });
-  const map: Record<number, string> = {};
-  (data?.data ?? []).forEach((f: any) => (map[f.id] = f.nom));
-  return map;
-};
-
 export const ProduitList = () => {
-  const { tableProps } = useTable({ syncWithLocation: true });
-  const famMap = useFamilleMap();
+  const { tableProps, setFilters } = useTable({ syncWithLocation: true });
+
+  const { data: famData } = useList({
+    resource: "familles",
+    pagination: { mode: "off" },
+  });
+  const familles = famData?.data ?? [];
+  const famMap: Record<number, string> = {};
+  familles.forEach((f: any) => (famMap[f.id] = f.nom));
+  const famOptions = familles.map((f: any) => ({ label: f.nom, value: f.id }));
+
+  const [search, setSearch] = useState("");
+  const [famille, setFamille] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const filters: any[] = [];
+    if (search) filters.push({ field: "nom", operator: "contains", value: search });
+    if (famille != null)
+      filters.push({ field: "famille_id", operator: "eq", value: famille });
+    setFilters(filters, "replace");
+  }, [search, famille]);
 
   return (
     <List title="Produits (PLU)">
+      <Space style={{ marginBottom: 16 }} wrap>
+        <Input.Search
+          placeholder="Rechercher un produit…"
+          allowClear
+          style={{ width: 280 }}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Select
+          placeholder="Toutes les familles"
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          style={{ width: 240 }}
+          options={famOptions}
+          value={famille}
+          onChange={(v) => setFamille(v)}
+        />
+      </Space>
+
       <Table {...tableProps} rowKey="id" size="small">
         <Table.Column dataIndex="code_plu" title="PLU" sorter />
         <Table.Column dataIndex="nom" title="Produit" sorter />
@@ -41,6 +73,7 @@ export const ProduitList = () => {
           dataIndex="prix_vente"
           title="Prix TTC"
           align="right"
+          sorter
           render={(v: any) => (v != null ? `${v} €` : "—")}
         />
         <Table.Column dataIndex="unite" title="Unité" />

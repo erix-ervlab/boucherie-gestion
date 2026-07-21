@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Create,
   DeleteButton,
@@ -10,9 +11,25 @@ import {
 import { Form, Input, Space, Switch, Table, Tag } from "antd";
 
 export const FournisseurList = () => {
-  const { tableProps } = useTable({ syncWithLocation: true });
+  const { tableProps, setFilters } = useTable({ syncWithLocation: true });
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    setFilters(
+      search ? [{ field: "nom", operator: "contains", value: search }] : [],
+      "replace",
+    );
+  }, [search]);
+
   return (
     <List title="Fournisseurs">
+      <Space style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Rechercher un fournisseur…"
+          allowClear
+          style={{ width: 280 }}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Space>
       <Table {...tableProps} rowKey="id" size="small">
         <Table.Column dataIndex="nom" title="Fournisseur" sorter />
         <Table.Column

@@ -11,7 +11,6 @@ import {
   ThemedLayoutV2,
   ThemedTitleV2,
   useNotificationProvider,
-  RefineThemes,
 } from "@refinedev/antd";
 import "@refinedev/antd/dist/reset.css";
 import dataProvider from "@refinedev/simple-rest";
@@ -19,10 +18,11 @@ import routerBindings, {
   DocumentTitleHandler,
   UnsavedChangesNotifier,
 } from "@refinedev/react-router-v6";
-import { App as AntdApp, ConfigProvider } from "antd";
-import frFR from "antd/locale/fr_FR";
+import { App as AntdApp } from "antd";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 
+import { Header } from "./components/Header";
+import { ThemeProvider } from "./theme";
 import { Dashboard } from "./pages/dashboard";
 import { ImportsPage } from "./pages/imports";
 import { ProduitCreate, ProduitEdit, ProduitList } from "./pages/produits";
@@ -38,7 +38,7 @@ const API_URL = "/api";
 function App() {
   return (
     <BrowserRouter>
-      <ConfigProvider theme={RefineThemes.Red} locale={frFR}>
+      <ThemeProvider>
         <AntdApp>
           <Refine
             dataProvider={dataProvider(API_URL)}
@@ -86,6 +86,7 @@ function App() {
               <Route
                 element={
                   <ThemedLayoutV2
+                    Header={Header}
                     Title={({ collapsed }) => (
                       <ThemedTitleV2
                         collapsed={collapsed}
@@ -122,7 +123,7 @@ function App() {
             <DocumentTitleHandler />
           </Refine>
         </AntdApp>
-      </ConfigProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

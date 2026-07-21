@@ -72,18 +72,42 @@ def make_crud_router(
     ):
         query = db.query(model)
 
-        # Filtres d'égalité sur les colonnes existantes du modèle (avec
-        # conversion de type : les query-params sont toujours des str).
+        # Filtres sur les colonnes du modèle. Refine/simple-rest encode
+        # l'opérateur en suffixe de clé : `nom_like` (contient), `x_gte`,
+        # `x_lte`, `x_gt`, `x_lt`, `x_ne` ; sans suffixe = égalité.
         for key, value in request.query_params.items():
             if key in _RESERVED:
                 continue
-            column = getattr(model, key, None)
+
+            field, op = key, "eq"
+            for suffix in ("_gte", "_lte", "_gt", "_lt", "_ne", "_like"):
+                if key.endswith(suffix) and getattr(model, key, None) is None:
+                    field, op = key[: -len(suffix)], suffix[1:]
+                    break
+
+            column = getattr(model, field, None)
             if column is None or not hasattr(column, "type"):
                 continue
+
+            if op == "like":
+                query = query.filter(column.ilike(f"%{value}%"))
+                continue
+
             ok, coerced = _coerce(column, value)
             if not ok:
                 continue
-            query = query.filter(column == coerced)
+            if op == "ne":
+                query = query.filter(column != coerced)
+            elif op == "gt":
+                query = query.filter(column > coerced)
+            elif op == "lt":
+                query = query.filter(column < coerced)
+            elif op == "gte":
+                query = query.filter(column >= coerced)
+            elif op == "lte":
+                query = query.filter(column <= coerced)
+            else:
+                query = query.filter(column == coerced)
 
         total = query.count()
 

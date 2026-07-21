@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Create,
   DeleteButton,
@@ -10,9 +11,25 @@ import {
 import { Form, Input, InputNumber, Space, Table } from "antd";
 
 export const FamilleList = () => {
-  const { tableProps } = useTable({ syncWithLocation: true });
+  const { tableProps, setFilters } = useTable({ syncWithLocation: true });
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    setFilters(
+      search ? [{ field: "nom", operator: "contains", value: search }] : [],
+      "replace",
+    );
+  }, [search]);
+
   return (
     <List title="Familles">
+      <Space style={{ marginBottom: 16 }}>
+        <Input.Search
+          placeholder="Rechercher une famille…"
+          allowClear
+          style={{ width: 280 }}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Space>
       <Table {...tableProps} rowKey="id" size="small">
         <Table.Column dataIndex="code" title="Code" sorter />
         <Table.Column dataIndex="nom" title="Famille" sorter />
