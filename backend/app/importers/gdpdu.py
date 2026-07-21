@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -189,13 +190,18 @@ def import_ventes(db: Session, file_bytes: bytes, fichier_nom: str) -> ImportRes
     result.z_max = max(incoming_z) if incoming_z else None
 
     if rows:
+        # rowcount du ON CONFLICT DO NOTHING n'est pas fiable (psycopg3
+        # renvoie -1) : on compte réellement avant/après.
+        before = db.query(func.count()).select_from(VenteLigne).scalar() or 0
         stmt = (
             pg_insert(VenteLigne)
             .values(rows)
             .on_conflict_do_nothing(constraint="uq_vente_ligne_cle_metier")
         )
-        res = db.execute(stmt)
-        result.nb_lignes_ajoutees = res.rowcount or 0
+        db.execute(stmt)
+        db.flush()
+        after = db.query(func.count()).select_from(VenteLigne).scalar() or 0
+        result.nb_lignes_ajoutees = after - before
         result.nb_lignes_deja_connues = len(rows) - result.nb_lignes_ajoutees
 
     dates = [r["date_vente"] for r in rows if r["date_vente"]]
