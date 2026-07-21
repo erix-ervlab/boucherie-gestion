@@ -17,6 +17,7 @@ class _Read(BaseModel):
 class FamilleBase(BaseModel):
     code: str | None = None
     nom: str
+    marge_cible: Decimal | None = None
 
 
 class FamilleCreate(FamilleBase):
@@ -26,6 +27,7 @@ class FamilleCreate(FamilleBase):
 class FamilleUpdate(BaseModel):
     code: str | None = None
     nom: str | None = None
+    marge_cible: Decimal | None = None
 
 
 class FamilleRead(_Read, FamilleBase):
@@ -80,6 +82,7 @@ class ProduitBase(BaseModel):
     sous_famille_id: int | None = None
     tva: Decimal = Decimal("5.50")
     prix_vente: Decimal | None = None
+    unite: str | None = None
     actif: bool = True
 
 
@@ -94,6 +97,7 @@ class ProduitUpdate(BaseModel):
     sous_famille_id: int | None = None
     tva: Decimal | None = None
     prix_vente: Decimal | None = None
+    unite: str | None = None
     actif: bool | None = None
 
 

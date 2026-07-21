@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..importers import gdpdu
+from ..importers import catalogue, gdpdu
 from ..models import ImportJournal
 from ..schemas import ImportJournalRead
 
@@ -34,6 +34,25 @@ async def importer_ventes(
         "z_min": result.z_min,
         "z_max": result.z_max,
         "trous_z": result.trous_z,
+    }
+
+
+@router.post("/catalogue")
+async def importer_catalogue(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Chargement initial du catalogue PLU depuis l'Excel de marge (.xlsx)."""
+    content = await file.read()
+    try:
+        result = catalogue.import_catalogue(db, content, file.filename or "catalogue.xlsx")
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return {
+        "fichier": file.filename,
+        "familles": result.familles,
+        "produits_ajoutes": result.produits_ajoutes,
+        "produits_maj": result.produits_maj,
     }
 
 

@@ -37,6 +37,8 @@ class Famille(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str | None] = mapped_column(String(32), unique=True)
     nom: Mapped[str] = mapped_column(String(120), unique=True)
+    # % de marge cible (feuille Paramètres de l'Excel), pour l'étape marge.
+    marge_cible: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
 
     sous_familles: Mapped[list["SousFamille"]] = relationship(
         back_populates="famille", cascade="all, delete-orphan"
@@ -87,6 +89,7 @@ class Produit(Base):
         Numeric(4, 2), default=Decimal("5.50"), server_default="5.50"
     )
     prix_vente: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))  # €/kg ou €/pièce
+    unite: Mapped[str | None] = mapped_column(String(16))  # « Kg » / « Pièce »
     actif: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
 
