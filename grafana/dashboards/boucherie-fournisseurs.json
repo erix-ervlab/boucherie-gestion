@@ -1,0 +1,173 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "title": "Boucherie — Suivi des fournisseurs",
+  "uid": "boucherie-fournisseurs",
+  "tags": ["boucherie", "achats"],
+  "timezone": "browser",
+  "time": { "from": "now-6M", "to": "now" },
+  "refresh": "",
+  "templating": {
+    "list": [
+      {
+        "name": "article",
+        "label": "Article (suivi prix)",
+        "type": "query",
+        "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+        "query": "SELECT DISTINCT designation || ' — ' || reference_fournisseur AS __text, reference_fournisseur AS __value FROM achat_ligne WHERE est_produit AND prix_unitaire>0 ORDER BY 1",
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    { "id": 100, "type": "row", "title": "Vue d'ensemble", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+
+    { "id": 1, "type": "stat", "title": "Total achats HT", "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(montant_ht),0) AS ht FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 2, "type": "stat", "title": "Total achats TTC", "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(montant_ttc),0) AS ttc FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 3, "type": "stat", "title": "Factures", "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT count(*) AS factures FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 4, "type": "stat", "title": "Fournisseurs", "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT count(DISTINCT fournisseur_id) AS fournisseurs FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 5, "type": "stat", "title": "Panier moyen / facture (HT)", "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(montant_ht)/NULLIF(count(*),0),2) AS panier FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 6, "type": "stat", "title": "Part des frais (HT)", "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(100.0*SUM(al.montant_ht) FILTER (WHERE NOT al.est_produit)/NULLIF(SUM(al.montant_ht),0),1) AS part_frais FROM achat_ligne al JOIN achat a ON a.id=al.achat_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 101, "type": "row", "title": "Dépenses par fournisseur", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 } },
+
+    { "id": 7, "type": "barchart", "title": "Achats HT par fournisseur", "gridPos": { "h": 9, "w": 10, "x": 0, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, SUM(a.montant_ht) AS ht FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 8, "type": "piechart", "title": "Répartition des dépenses HT", "gridPos": { "h": 9, "w": 7, "x": 10, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR" }, "overrides": [] },
+      "options": { "pieType": "donut", "reduceOptions": { "values": true, "calcs": [] }, "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, SUM(a.montant_ht) AS ht FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 9, "type": "barchart", "title": "Nombre de factures par fournisseur", "gridPos": { "h": 9, "w": 7, "x": 17, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, count(*) AS factures FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 10, "type": "barchart", "title": "Panier moyen HT / facture", "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, round(SUM(a.montant_ht)/NULLIF(count(*),0),2) AS panier FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 11, "type": "barchart", "title": "Poids acheté par fournisseur", "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, round(SUM(al.poids_kg),1) AS kg FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE al.est_produit AND al.poids_kg>0 AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 12, "type": "barchart", "title": "Part des frais par fournisseur", "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, round(100.0*SUM(al.montant_ht) FILTER (WHERE NOT al.est_produit)/NULLIF(SUM(al.montant_ht),0),1) AS part_frais FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 102, "type": "row", "title": "Achats dans le temps", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 } },
+
+    { "id": 13, "type": "timeseries", "title": "Achats HT par semaine", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_trunc('week',date_facture)::timestamp AS \"time\", SUM(montant_ht) AS achats_ht FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1" } ] },
+
+    { "id": 14, "type": "timeseries", "title": "Achats HT cumulés", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2 }, "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_facture::timestamp AS \"time\", SUM(SUM(montant_ht)) OVER (ORDER BY date_facture) AS cumule FROM achat WHERE date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY date_facture ORDER BY date_facture" } ] },
+
+    { "id": 15, "type": "timeseries", "title": "Achats HT par fournisseur et par semaine", "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "bars", "fillOpacity": 80, "lineWidth": 1, "stacking": { "mode": "normal", "group": "A" } } }, "overrides": [] },
+      "options": { "legend": { "showLegend": true, "placement": "right", "displayMode": "table", "calcs": ["sum"] }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_trunc('week',a.date_facture)::timestamp AS \"time\", fo.nom AS metric, SUM(a.montant_ht) AS value FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1, 2 ORDER BY 1" } ] },
+
+    { "id": 103, "type": "row", "title": "Familles & produits achetés", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 } },
+
+    { "id": 16, "type": "barchart", "title": "Achats HT par famille", "gridPos": { "h": 9, "w": 12, "x": 0, "y": 41 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, SUM(al.montant_ht) AS ht FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN famille f ON f.id=al.famille_id WHERE al.famille_id IS NOT NULL AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 17, "type": "barchart", "title": "Poids acheté par famille", "gridPos": { "h": 9, "w": 12, "x": 12, "y": 41 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, round(SUM(al.poids_kg),1) AS kg FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN famille f ON f.id=al.famille_id WHERE al.famille_id IS NOT NULL AND al.poids_kg>0 AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 18, "type": "barchart", "title": "Prix moyen au kg par famille (achats)", "gridPos": { "h": 9, "w": 12, "x": 0, "y": 50 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, round(SUM(al.montant_ht) FILTER (WHERE al.poids_kg>0)/NULLIF(SUM(al.poids_kg) FILTER (WHERE al.poids_kg>0),0),2) AS prix_kg FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN famille f ON f.id=al.famille_id WHERE al.famille_id IS NOT NULL AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 HAVING SUM(al.poids_kg) FILTER (WHERE al.poids_kg>0)>0 ORDER BY 2 DESC" } ] },
+
+    { "id": 19, "type": "table", "title": "Top références achetées (HT)", "gridPos": { "h": 9, "w": 12, "x": 12, "y": 50 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "ht" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "kg" }, "properties": [ { "id": "unit", "value": "kg" } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT al.designation AS article, fo.nom AS fournisseur, SUM(al.montant_ht) AS ht, round(SUM(al.poids_kg),1) AS kg FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE al.est_produit AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY al.designation, fo.nom ORDER BY ht DESC LIMIT 15" } ] },
+
+    { "id": 104, "type": "row", "title": "Suivi des prix & dernières factures", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 59 } },
+
+    { "id": 20, "type": "timeseries", "title": "Évolution du prix au kg — $article", "gridPos": { "h": 9, "w": 24, "x": 0, "y": 60 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "line", "lineWidth": 2, "pointSize": 8, "showPoints": "always", "spanNulls": true } }, "overrides": [] },
+      "options": { "legend": { "showLegend": true, "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT a.date_facture::timestamp AS \"time\", fo.nom AS metric, al.prix_unitaire AS value FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE al.reference_fournisseur = '$article' AND al.prix_unitaire>0 AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date ORDER BY 1" } ] },
+
+    { "id": 21, "type": "table", "title": "Évolution de prix par référence (premier → dernier achat)", "gridPos": { "h": 11, "w": 12, "x": 0, "y": 69 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "premier" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "dernier" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "evol_pct" }, "properties": [ { "id": "unit", "value": "percent" }, { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-GrYlRd" } } ] } ] },
+      "options": { "showHeader": true, "sortBy": [ { "displayName": "evol_pct", "desc": true } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "WITH px AS (SELECT al.reference_fournisseur ref, al.designation, al.prix_unitaire pu, row_number() OVER (PARTITION BY al.reference_fournisseur ORDER BY a.date_facture) rn_a, row_number() OVER (PARTITION BY al.reference_fournisseur ORDER BY a.date_facture DESC) rn_d FROM achat_ligne al JOIN achat a ON a.id=al.achat_id WHERE al.est_produit AND al.prix_unitaire>0 AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date) SELECT min(designation) AS article, round(max(pu) FILTER (WHERE rn_a=1),2) AS premier, round(max(pu) FILTER (WHERE rn_d=1),2) AS dernier, round(100*(max(pu) FILTER (WHERE rn_d=1)-max(pu) FILTER (WHERE rn_a=1))/NULLIF(max(pu) FILTER (WHERE rn_a=1),0),1) AS evol_pct, count(*) AS nb_achats FROM px GROUP BY ref HAVING count(*)>=2 ORDER BY evol_pct DESC NULLS LAST" } ] },
+
+    { "id": 22, "type": "table", "title": "Dernières factures", "gridPos": { "h": 11, "w": 12, "x": 12, "y": 69 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "ht" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "tva" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "ttc" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT a.date_facture AS date, fo.nom AS fournisseur, a.numero_facture AS facture, a.montant_ht AS ht, a.montant_tva AS tva, a.montant_ttc AS ttc FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date ORDER BY a.date_facture DESC, a.id DESC LIMIT 20" } ] }
+  ]
+}
