@@ -105,6 +105,31 @@ class ProduitRead(_Read, ProduitBase):
     id: int
 
 
+# --- Correspondance fournisseur (mémoire d'apprentissage des familles) ---
+class CorrespondanceBase(BaseModel):
+    fournisseur_id: int
+    reference_fournisseur: str
+    designation: str | None = None
+    famille_id: int | None = None
+    sous_famille_id: int | None = None
+
+
+class CorrespondanceCreate(CorrespondanceBase):
+    pass
+
+
+class CorrespondanceUpdate(BaseModel):
+    fournisseur_id: int | None = None
+    reference_fournisseur: str | None = None
+    designation: str | None = None
+    famille_id: int | None = None
+    sous_famille_id: int | None = None
+
+
+class CorrespondanceRead(_Read, CorrespondanceBase):
+    id: int
+
+
 # --- Journal d'import (lecture seule côté API) ---
 class ImportJournalRead(_Read):
     id: int

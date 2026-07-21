@@ -75,6 +75,16 @@ app.include_router(
         default_sort="code_plu",
     )
 )
+app.include_router(
+    make_crud_router(
+        resource="correspondances",
+        model=models.CorrespondanceFournisseur,
+        read_schema=schemas.CorrespondanceRead,
+        create_schema=schemas.CorrespondanceCreate,
+        update_schema=schemas.CorrespondanceUpdate,
+        default_sort="reference_fournisseur",
+    )
+)
 
 # --- Imports caisse & ventes ---
 app.include_router(imports.router)

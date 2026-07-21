@@ -8,6 +8,7 @@ import {
   ContainerOutlined,
   PercentageOutlined,
   HistoryOutlined,
+  LinkOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -40,6 +41,11 @@ import {
   FournisseurEdit,
   FournisseurList,
 } from "./pages/fournisseurs";
+import {
+  CorrespondanceCreate,
+  CorrespondanceEdit,
+  CorrespondanceList,
+} from "./pages/correspondances";
 
 const API_URL = "/api";
 
@@ -104,6 +110,13 @@ function App() {
                 edit: "/fournisseurs/edit/:id",
                 meta: { label: "Fournisseurs", icon: <TeamOutlined /> },
               },
+              {
+                name: "correspondances",
+                list: "/correspondances",
+                create: "/correspondances/create",
+                edit: "/correspondances/edit/:id",
+                meta: { label: "Correspondances", icon: <LinkOutlined /> },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -147,6 +160,11 @@ function App() {
                   <Route index element={<FournisseurList />} />
                   <Route path="create" element={<FournisseurCreate />} />
                   <Route path="edit/:id" element={<FournisseurEdit />} />
+                </Route>
+                <Route path="/correspondances">
+                  <Route index element={<CorrespondanceList />} />
+                  <Route path="create" element={<CorrespondanceCreate />} />
+                  <Route path="edit/:id" element={<CorrespondanceEdit />} />
                 </Route>
                 <Route path="*" element={<ErrorComponent />} />
               </Route>
