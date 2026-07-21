@@ -28,10 +28,11 @@ def _prep(
     famille_id: int | None,
     *,
     join_famille: bool = False,
+    join_produit: bool = False,
 ):
     """Construit une requête agrégée filtrée (annulations exclues)."""
     q = db.query(*cols).select_from(VenteLigne).filter(VenteLigne.annule.is_(False))
-    if famille_id is not None or join_famille:
+    if famille_id is not None or join_famille or join_produit:
         q = q.outerjoin(Produit, Produit.code_plu == VenteLigne.n_plu)
     if join_famille:
         q = q.outerjoin(Famille, Famille.id == Produit.famille_id)
@@ -218,6 +219,7 @@ def top_produits(
             date_debut,
             date_fin,
             famille_id,
+            join_produit=True,
         )
         .group_by(VenteLigne.n_plu)
         .order_by(func.sum(VenteLigne.montant).desc())
