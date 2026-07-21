@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import { useList } from "@refinedev/core";
 import {
@@ -7,8 +7,10 @@ import {
   Card,
   DatePicker,
   Input,
+  Progress,
   Select,
   Space,
+  Spin,
   Switch,
   Table,
   Tag,
@@ -24,8 +26,10 @@ const euro = (v: any) =>
 export const AchatsPage = () => {
   const [draft, setDraft] = useState<any>(null);
   const [extracting, setExtracting] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [saving, setSaving] = useState(false);
   const [achats, setAchats] = useState<any[]>([]);
+  const timerRef = useRef<any>(null);
 
   const { data: famData } = useList({ resource: "familles", pagination: { mode: "off" } });
   const familles = famData?.data ?? [];
@@ -54,6 +58,11 @@ export const AchatsPage = () => {
     customRequest: async (opt: any) => {
       setExtracting(true);
       setDraft(null);
+      // Barre de progression indéterminée : progresse vers ~92 % en attendant.
+      setProgress(6);
+      timerRef.current = setInterval(() => {
+        setProgress((p) => (p >= 92 ? p : p + Math.max(1, Math.round((92 - p) / 14))));
+      }, 900);
       try {
         const fd = new FormData();
         fd.append("file", opt.file);
@@ -70,7 +79,10 @@ export const AchatsPage = () => {
         message.error("Lecture IA : " + (e.message || "échec"));
         opt.onError?.(e);
       } finally {
+        clearInterval(timerRef.current);
+        setProgress(100);
         setExtracting(false);
+        setTimeout(() => setProgress(0), 800);
       }
     },
   };
@@ -148,6 +160,26 @@ export const AchatsPage = () => {
           </p>
         </Upload.Dragger>
       </Card>
+
+      {extracting && (
+        <Card style={{ marginBottom: 16 }}>
+          <Space direction="vertical" align="center" style={{ width: "100%" }} size="middle">
+            <Spin size="large" />
+            <Typography.Text strong>
+              Lecture de la facture par l'IA… (environ 30 secondes)
+            </Typography.Text>
+            <Progress
+              percent={progress}
+              status="active"
+              showInfo={false}
+              style={{ maxWidth: 420, width: "100%" }}
+            />
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Extraction des lignes, montants, lots et origines…
+            </Typography.Text>
+          </Space>
+        </Card>
+      )}
 
       {draft && (
         <Card
