@@ -193,12 +193,16 @@ def import_ventes(db: Session, file_bytes: bytes, fichier_nom: str) -> ImportRes
         # rowcount du ON CONFLICT DO NOTHING n'est pas fiable (psycopg3
         # renvoie -1) : on compte réellement avant/après.
         before = db.query(func.count()).select_from(VenteLigne).scalar() or 0
-        stmt = (
-            pg_insert(VenteLigne)
-            .values(rows)
-            .on_conflict_do_nothing(constraint="uq_vente_ligne_cle_metier")
-        )
-        db.execute(stmt)
+        # Insertion par lots : Postgres limite une requête à 65535 paramètres
+        # (≈ 4000 lignes × 16 colonnes). On découpe pour les gros exports.
+        CHUNK = 1000
+        for i in range(0, len(rows), CHUNK):
+            stmt = (
+                pg_insert(VenteLigne)
+                .values(rows[i : i + CHUNK])
+                .on_conflict_do_nothing(constraint="uq_vente_ligne_cle_metier")
+            )
+            db.execute(stmt)
         db.flush()
         after = db.query(func.count()).select_from(VenteLigne).scalar() or 0
         result.nb_lignes_ajoutees = after - before

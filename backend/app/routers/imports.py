@@ -25,6 +25,9 @@ async def importer_ventes(
         raise HTTPException(status_code=422, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:  # noqa: BLE001 — surface une erreur lisible au front
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'import des ventes : {e}")
     return {
         "fichier": result.fichier_nom,
         "lignes_ajoutees": result.nb_lignes_ajoutees,
@@ -48,6 +51,9 @@ async def importer_catalogue(
         result = catalogue.import_catalogue(db, content, file.filename or "catalogue.xlsx")
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'import du catalogue : {e}")
     return {
         "fichier": file.filename,
         "familles": result.familles,
