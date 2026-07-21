@@ -29,6 +29,8 @@ async def importer_ventes(
         "fichier": result.fichier_nom,
         "lignes_ajoutees": result.nb_lignes_ajoutees,
         "lignes_deja_connues": result.nb_lignes_deja_connues,
+        "lignes_ignorees": result.nb_lignes_ignorees,
+        "annulations": result.nb_annulations,
         "z_min": result.z_min,
         "z_max": result.z_max,
         "trous_z": result.trous_z,

@@ -11,7 +11,7 @@ from . import models, schemas
 from .config import settings
 from .crud import make_crud_router
 from .db import engine
-from .routers import imports
+from .routers import imports, ventes
 
 app = FastAPI(title="Boucherie de l'Abbatiale — Gestion", version="0.1.0")
 
@@ -76,5 +76,6 @@ app.include_router(
     )
 )
 
-# --- Imports caisse ---
+# --- Imports caisse & ventes ---
 app.include_router(imports.router)
+app.include_router(ventes.router)

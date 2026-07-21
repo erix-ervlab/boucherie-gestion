@@ -149,6 +149,12 @@ class VenteLigne(Base):
     position_ticket: Mapped[int] = mapped_column(Integer, default=0)
 
     # --- attributs ---
+    # Type_vente : 1=vente poids, 2=retour poids, 3=vente pièce, 4=retour pièce.
+    type_vente: Mapped[str | None] = mapped_column(String(4))
+    nom_plu: Mapped[str | None] = mapped_column(String(200))  # « PRIX LIBRE » si prix libre
+    numero_vendeur: Mapped[str | None] = mapped_column(String(16), index=True)
+    prix_unitaire: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))  # €/kg ou €/pièce
+    taux_tva: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     date_vente: Mapped[date | None] = mapped_column(Date, index=True)
     horodatage: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     produit_id: Mapped[int | None] = mapped_column(ForeignKey("produit.id"))
