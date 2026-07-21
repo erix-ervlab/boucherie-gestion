@@ -390,11 +390,19 @@ export const AchatsPage = () => {
         </Card>
       )}
 
-      <Card title="Factures enregistrées">
+      <Card
+        title={`Factures enregistrées (${achats.length})`}
+        extra={
+          <Button size="small" onClick={loadAchats}>
+            Rafraîchir
+          </Button>
+        }
+      >
         <Table
           dataSource={achats}
           rowKey="id"
           size="small"
+          pagination={{ pageSize: 20, showSizeChanger: true }}
           columns={[
             { title: "Fournisseur", dataIndex: "fournisseur" },
             { title: "N° facture", dataIndex: "numero_facture" },
