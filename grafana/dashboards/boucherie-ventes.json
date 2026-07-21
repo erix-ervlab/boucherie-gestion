@@ -1,78 +1,195 @@
 {
   "annotations": { "list": [] },
   "editable": true,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "schemaVersion": 39,
-  "version": 1,
-  "title": "Boucherie — Ventes (exemple)",
+  "version": 2,
+  "title": "Boucherie — Pilotage des ventes",
   "uid": "boucherie-ventes",
   "tags": ["boucherie"],
   "timezone": "browser",
-  "time": { "from": "2026-07-01T00:00:00.000Z", "to": "2026-07-31T23:59:59.000Z" },
+  "time": { "from": "2026-03-01T00:00:00.000Z", "to": "2026-07-31T23:59:59.000Z" },
   "refresh": "",
+  "templating": { "list": [] },
   "panels": [
-    {
-      "id": 1,
-      "type": "stat",
-      "title": "Chiffre d'affaires (période)",
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+    { "id": 100, "type": "row", "title": "Vue d'ensemble", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+
+    { "id": 1, "type": "stat", "title": "Chiffre d'affaires TTC", "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR" }, "overrides": [] },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(montant), 0) AS \"CA\" FROM vente_ligne WHERE annule = false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "type": "timeseries",
-      "title": "CA par jour",
-      "gridPos": { "h": 9, "w": 18, "x": 6, "y": 0 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(montant),0) AS ca FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 2, "type": "stat", "title": "Tickets", "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "currencyEUR",
-          "custom": { "drawStyle": "bars", "fillOpacity": 40, "lineWidth": 1 }
-        },
-        "overrides": []
-      },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) AS tickets FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 3, "type": "stat", "title": "Panier moyen", "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(montant)/NULLIF(count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)),0),2) AS panier FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 4, "type": "stat", "title": "Poids vendu", "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(poids_gramme)/1000.0,0) AS kg FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 5, "type": "stat", "title": "Prix moyen / kg", "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(montant) FILTER (WHERE poids_gramme>0)/NULLIF(SUM(poids_gramme) FILTER (WHERE poids_gramme>0)/1000.0,0),2) AS prix_kg FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 6, "type": "stat", "title": "Part en « prix libre »", "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(100.0*SUM(montant) FILTER (WHERE n_plu IN ('0','1001'))/NULLIF(SUM(montant),0),1) AS part_libre FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date" } ] },
+
+    { "id": 101, "type": "row", "title": "Ventes dans le temps", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 } },
+
+    { "id": 7, "type": "timeseries", "title": "CA par jour", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 } }, "overrides": [] },
       "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-          "editorMode": "code",
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT date_vente::timestamp AS \"time\", SUM(montant) AS \"CA\" FROM vente_ligne WHERE annule = false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "type": "barchart",
-      "title": "CA par famille",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 9 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_vente::timestamp AS \"time\", SUM(montant) AS ca FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1" } ] },
+
+    { "id": 8, "type": "timeseries", "title": "Nombre de tickets par jour", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-      "fieldConfig": { "defaults": { "unit": "currencyEUR" }, "overrides": [] },
-      "options": { "orientation": "horizontal", "xTickLabelRotation": 0, "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "boucherie-pg" },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COALESCE(f.nom, 'Prix libre / autre') AS \"famille\", SUM(v.montant) AS \"CA\" FROM vente_ligne v LEFT JOIN produit p ON p.code_plu = v.n_plu LEFT JOIN famille f ON f.id = p.famille_id WHERE v.annule = false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC"
-        }
-      ]
-    }
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 }, "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_vente::timestamp AS \"time\", count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) AS tickets FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1" } ] },
+
+    { "id": 9, "type": "timeseries", "title": "CA cumulé sur la période", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2 }, "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_vente::timestamp AS \"time\", SUM(SUM(montant)) OVER (ORDER BY date_vente) AS ca_cumule FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY date_vente ORDER BY date_vente" } ] },
+
+    { "id": 10, "type": "timeseries", "title": "Panier moyen par jour", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "pointSize": 5, "showPoints": "always" }, "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "legend": { "showLegend": false }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "time_series", "rawSql": "SELECT date_vente::timestamp AS \"time\", round(SUM(montant)/NULLIF(count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)),0),2) AS panier FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY date_vente ORDER BY date_vente" } ] },
+
+    { "id": 11, "type": "barchart", "title": "CA par semaine", "gridPos": { "h": 7, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "orientation": "vertical", "showValue": "auto", "legend": { "showLegend": false }, "xTickLabelRotation": 0 },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT to_char(date_trunc('week',date_vente),'DD/MM') AS semaine, SUM(montant) AS ca FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY date_trunc('week',date_vente) ORDER BY date_trunc('week',date_vente)" } ] },
+
+    { "id": 102, "type": "row", "title": "Rythme d'activité (staffing)", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 } },
+
+    { "id": 12, "type": "barchart", "title": "CA par jour de semaine", "gridPos": { "h": 8, "w": 8, "x": 0, "y": 30 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT CASE extract(isodow from date_vente) WHEN 1 THEN 'Lundi' WHEN 2 THEN 'Mardi' WHEN 3 THEN 'Mercredi' WHEN 4 THEN 'Jeudi' WHEN 5 THEN 'Vendredi' WHEN 6 THEN 'Samedi' WHEN 7 THEN 'Dimanche' END AS jour, SUM(montant) AS ca FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY extract(isodow from date_vente) ORDER BY extract(isodow from date_vente)" } ] },
+
+    { "id": 13, "type": "barchart", "title": "Tickets par jour de semaine", "gridPos": { "h": 8, "w": 8, "x": 8, "y": 30 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT CASE extract(isodow from date_vente) WHEN 1 THEN 'Lundi' WHEN 2 THEN 'Mardi' WHEN 3 THEN 'Mercredi' WHEN 4 THEN 'Jeudi' WHEN 5 THEN 'Vendredi' WHEN 6 THEN 'Samedi' WHEN 7 THEN 'Dimanche' END AS jour, count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) AS tickets FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY extract(isodow from date_vente) ORDER BY extract(isodow from date_vente)" } ] },
+
+    { "id": 14, "type": "barchart", "title": "Panier moyen par jour de semaine", "gridPos": { "h": 8, "w": 8, "x": 16, "y": 30 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT CASE extract(isodow from date_vente) WHEN 1 THEN 'Lundi' WHEN 2 THEN 'Mardi' WHEN 3 THEN 'Mercredi' WHEN 4 THEN 'Jeudi' WHEN 5 THEN 'Vendredi' WHEN 6 THEN 'Samedi' WHEN 7 THEN 'Dimanche' END AS jour, round(SUM(montant)/NULLIF(count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)),0),2) AS panier FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY extract(isodow from date_vente) ORDER BY extract(isodow from date_vente)" } ] },
+
+    { "id": 15, "type": "barchart", "title": "CA par heure de la journée", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "orientation": "vertical", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT lpad(extract(hour from horodatage)::int::text,2,'0')||'h' AS heure, SUM(montant) AS ca FROM vente_ligne WHERE annule=false AND horodatage IS NOT NULL AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1" } ] },
+
+    { "id": 16, "type": "barchart", "title": "Tickets par heure de la journée", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "orientation": "vertical", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT lpad(extract(hour from horodatage)::int::text,2,'0')||'h' AS heure, count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) AS tickets FROM vente_ligne WHERE annule=false AND horodatage IS NOT NULL AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 1" } ] },
+
+    { "id": 17, "type": "table", "title": "Affluence : tickets par jour × tranche horaire", "gridPos": { "h": 9, "w": 24, "x": 0, "y": 46 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "custom": { "cellOptions": { "type": "color-background", "mode": "gradient" }, "align": "center" }, "color": { "mode": "continuous-BlYlRd" } }, "overrides": [ { "matcher": { "id": "byName", "options": "jour" }, "properties": [ { "id": "custom.cellOptions", "value": { "type": "auto" } }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "text" } } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT CASE extract(isodow from date_vente) WHEN 1 THEN 'Lundi' WHEN 2 THEN 'Mardi' WHEN 3 THEN 'Mercredi' WHEN 4 THEN 'Jeudi' WHEN 5 THEN 'Vendredi' WHEN 6 THEN 'Samedi' WHEN 7 THEN 'Dimanche' END AS jour, count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) FILTER (WHERE extract(hour from horodatage)<10) AS \"Matin (-10h)\", count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) FILTER (WHERE extract(hour from horodatage) BETWEEN 10 AND 12) AS \"Midi (10-13h)\", count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) FILTER (WHERE extract(hour from horodatage) BETWEEN 13 AND 15) AS \"Après-midi (13-16h)\", count(DISTINCT (id_sd_device,numero_rapport_z,numero_ticket)) FILTER (WHERE extract(hour from horodatage)>=16) AS \"Soir (16h+)\" FROM vente_ligne WHERE annule=false AND horodatage IS NOT NULL AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY extract(isodow from date_vente) ORDER BY extract(isodow from date_vente)" } ] },
+
+    { "id": 103, "type": "row", "title": "Familles & produits (articles codés PLU)", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 } },
+
+    { "id": 18, "type": "text", "title": "", "gridPos": { "h": 3, "w": 24, "x": 0, "y": 56 },
+      "options": { "mode": "markdown", "content": "⚠️ **Couverture PLU limitée** — environ **89 % du CA est saisi en « prix libre »** (sans code article). Les graphiques ci-dessous ne portent donc que sur les **~11 % d'articles réellement codés PLU** : ils montrent des *tendances* (quels articles codés marchent le mieux), pas les parts de marché réelles de chaque famille." } },
+
+    { "id": 19, "type": "barchart", "title": "CA par famille (PLU)", "gridPos": { "h": 9, "w": 12, "x": 0, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, SUM(v.montant) AS ca FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu JOIN famille f ON f.id=p.famille_id WHERE v.annule=false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 20, "type": "barchart", "title": "Poids vendu par famille (PLU)", "gridPos": { "h": 9, "w": 12, "x": 12, "y": 59 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, round(SUM(v.poids_gramme)/1000.0,1) AS kg FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu JOIN famille f ON f.id=p.famille_id WHERE v.annule=false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 21, "type": "table", "title": "Top produits PLU par CA", "gridPos": { "h": 10, "w": 12, "x": 0, "y": 68 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "ca" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "kg" }, "properties": [ { "id": "unit", "value": "kg" } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT p.nom AS produit, SUM(v.montant) AS ca, round(SUM(v.poids_gramme)/1000.0,1) AS kg FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu WHERE v.annule=false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY p.nom ORDER BY ca DESC LIMIT 12" } ] },
+
+    { "id": 22, "type": "table", "title": "Top produits PLU par poids", "gridPos": { "h": 10, "w": 12, "x": 12, "y": 68 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "ca" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "kg" }, "properties": [ { "id": "unit", "value": "kg" } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT p.nom AS produit, round(SUM(v.poids_gramme)/1000.0,1) AS kg, SUM(v.montant) AS ca FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu WHERE v.annule=false AND v.poids_gramme>0 AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY p.nom ORDER BY kg DESC LIMIT 12" } ] },
+
+    { "id": 23, "type": "barchart", "title": "Prix moyen au kg par famille (PLU)", "gridPos": { "h": 8, "w": 24, "x": 0, "y": 78 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, round(SUM(v.montant) FILTER (WHERE v.poids_gramme>0)/NULLIF(SUM(v.poids_gramme) FILTER (WHERE v.poids_gramme>0)/1000.0,0),2) AS prix_kg FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu JOIN famille f ON f.id=p.famille_id WHERE v.annule=false AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 HAVING SUM(v.poids_gramme) FILTER (WHERE v.poids_gramme>0)>0 ORDER BY 2 DESC" } ] },
+
+    { "id": 104, "type": "row", "title": "Marge & achats", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 86 } },
+
+    { "id": 24, "type": "text", "title": "", "gridPos": { "h": 3, "w": 24, "x": 0, "y": 87 },
+      "options": { "mode": "markdown", "content": "⚠️ **Marge indicative uniquement.** Deux limites : (1) seules les ventes codées PLU (~11 %) sont rattachées à une famille ; (2) peu de factures d'achat sont saisies pour l'instant. Le « CA HT rattaché » ne représente donc qu'une fraction des ventes réelles de la famille — **ne pas lire ces chiffres comme une marge nette**. La fiabilité progressera à mesure que les achats seront saisis et que davantage de ventes passeront par des codes PLU." } },
+
+    { "id": 25, "type": "barchart", "title": "Coût d'achat HT par famille (achats saisis)", "gridPos": { "h": 9, "w": 12, "x": 0, "y": 90 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT f.nom AS famille, SUM(al.montant_ht) AS cout_ht FROM achat_ligne al JOIN achat a ON a.id=al.achat_id JOIN famille f ON f.id=al.famille_id WHERE al.famille_id IS NOT NULL AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 26, "type": "barchart", "title": "Achats HT par fournisseur", "gridPos": { "h": 9, "w": 12, "x": 12, "y": 90 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fo.nom AS fournisseur, SUM(a.montant_ht) AS achats_ht FROM achat a JOIN fournisseur fo ON fo.id=a.fournisseur_id WHERE a.montant_ht IS NOT NULL AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 27, "type": "table", "title": "Marge indicative par famille (CA HT rattaché PLU − coût d'achat HT)", "gridPos": { "h": 9, "w": 24, "x": 0, "y": 99 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "ca_ht_rattache" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "cout_achat_ht" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "marge_indicative" }, "properties": [ { "id": "unit", "value": "currencyEUR" }, { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-RdYlGr" } } ] }, { "matcher": { "id": "byName", "options": "cible_pct" }, "properties": [ { "id": "unit", "value": "percent" } ] } ] },
+      "options": { "showHeader": true },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "WITH ca AS (SELECT p.famille_id fid, SUM(v.montant/1.055) ca_ht FROM vente_ligne v JOIN produit p ON p.code_plu=v.n_plu WHERE v.annule=false AND p.famille_id IS NOT NULL AND v.date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1), ach AS (SELECT al.famille_id fid, SUM(al.montant_ht) cout FROM achat_ligne al JOIN achat a ON a.id=al.achat_id WHERE al.famille_id IS NOT NULL AND a.date_facture BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1) SELECT f.nom AS famille, round(COALESCE(ca.ca_ht,0),0) AS ca_ht_rattache, round(COALESCE(ach.cout,0),0) AS cout_achat_ht, round(COALESCE(ca.ca_ht,0)-COALESCE(ach.cout,0),0) AS marge_indicative, f.marge_cible AS cible_pct FROM famille f LEFT JOIN ca ON ca.fid=f.id LEFT JOIN ach ON ach.fid=f.id WHERE COALESCE(ca.ca_ht,0)<>0 OR COALESCE(ach.cout,0)<>0 ORDER BY marge_indicative DESC" } ] },
+
+    { "id": 105, "type": "row", "title": "Vendeurs & tickets", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 108 } },
+
+    { "id": 28, "type": "barchart", "title": "CA par vendeur", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 109 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT 'Vendeur '||COALESCE(numero_vendeur,'?') AS vendeur, SUM(montant) AS ca FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY 1 ORDER BY 2 DESC" } ] },
+
+    { "id": 29, "type": "histogram", "title": "Distribution du montant des tickets", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 109 },
+      "datasource": { "type": "postgres", "uid": "boucherie-pg" },
+      "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
+      "options": { "bucketSize": 5, "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT SUM(montant) AS montant_ticket FROM vente_ligne WHERE annule=false AND date_vente BETWEEN $__timeFrom()::date AND $__timeTo()::date GROUP BY id_sd_device,numero_rapport_z,numero_ticket" } ] }
   ]
 }
