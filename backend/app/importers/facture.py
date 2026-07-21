@@ -139,9 +139,12 @@ def extraire(
     )
 
     b64 = base64.standard_b64encode(file_bytes).decode("ascii")
+    # 16000 : les modèles récents (Sonnet 5, Opus) raisonnent par défaut
+    # (thinking adaptatif) avant d'émettre le JSON ; 8000 était épuisé par
+    # la seule réflexion sur les grosses factures -> réponse vide.
     resp = _client.messages.create(
         model=resoudre(modele),
-        max_tokens=8000,
+        max_tokens=16000,
         system=system,
         output_config={"format": {"type": "json_schema", "schema": schema}},
         messages=[
@@ -162,6 +165,14 @@ def extraire(
         ],
     )
     texte = "".join(b.text for b in resp.content if b.type == "text")
+    if not texte.strip():
+        # Réponse sans texte : quasi toujours max_tokens épuisé par la
+        # réflexion. Message explicite plutôt qu'une erreur JSON obscure.
+        raise ValueError(
+            "Le modèle n'a pas renvoyé de résultat "
+            f"(arrêt : {resp.stop_reason}). Réessaie, éventuellement avec un "
+            "autre modèle."
+        )
     data = json.loads(texte)
 
     # Rapprochement fournisseur.
