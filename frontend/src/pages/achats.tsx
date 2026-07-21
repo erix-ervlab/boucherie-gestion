@@ -7,6 +7,7 @@ import {
   Card,
   DatePicker,
   Input,
+  Popconfirm,
   Progress,
   Select,
   Space,
@@ -25,6 +26,7 @@ const euro = (v: any) =>
 
 export const AchatsPage = () => {
   const [draft, setDraft] = useState<any>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -119,8 +121,8 @@ export const AchatsPage = () => {
           sous_famille_id: null,
         })),
       };
-      const r = await fetch("/api/achats", {
-        method: "POST",
+      const r = await fetch(editId ? `/api/achats/${editId}` : "/api/achats", {
+        method: editId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
@@ -130,14 +132,42 @@ export const AchatsPage = () => {
       }
       const data = await r.json();
       message.success(
-        `Facture enregistrée : ${data.nb_lignes} lignes, ${data.correspondances_apprises} correspondance(s) apprise(s).`,
+        `${editId ? "Facture modifiée" : "Facture enregistrée"} : ${data.nb_lignes} lignes, ${data.correspondances_apprises} correspondance(s) apprise(s).`,
       );
       setDraft(null);
+      setEditId(null);
       loadAchats();
     } catch (e: any) {
       message.error("Enregistrement : " + (e.message || "échec"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const editer = async (id: number) => {
+    try {
+      const r = await fetch(`/api/achats/${id}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      setDraft(await r.json());
+      setEditId(id);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e: any) {
+      message.error("Chargement : " + (e.message || "échec"));
+    }
+  };
+
+  const supprimer = async (id: number) => {
+    try {
+      const r = await fetch(`/api/achats/${id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      message.success("Facture supprimée.");
+      if (editId === id) {
+        setDraft(null);
+        setEditId(null);
+      }
+      loadAchats();
+    } catch (e: any) {
+      message.error("Suppression : " + (e.message || "échec"));
     }
   };
 
@@ -183,12 +213,22 @@ export const AchatsPage = () => {
 
       {draft && (
         <Card
-          title="Brouillon à vérifier"
+          title={editId ? `Modifier la facture n°${editId}` : "Brouillon à vérifier"}
           style={{ marginBottom: 16 }}
           extra={
-            <Button type="primary" loading={saving} onClick={valider}>
-              Valider et enregistrer
-            </Button>
+            <Space>
+              <Button
+                onClick={() => {
+                  setDraft(null);
+                  setEditId(null);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button type="primary" loading={saving} onClick={valider}>
+                {editId ? "Enregistrer les modifications" : "Valider et enregistrer"}
+              </Button>
+            </Space>
           }
         >
           <Space wrap style={{ marginBottom: 12 }}>
@@ -238,7 +278,11 @@ export const AchatsPage = () => {
               rowExpandable: (r: any) => !!(r.numero_lot || r.origine),
             }}
             columns={[
-              { title: "Réf", dataIndex: "reference", width: 90 },
+              {
+                title: "Réf",
+                width: 90,
+                render: (_: any, r: any) => r.reference ?? r.reference_fournisseur ?? "—",
+              },
               {
                 title: "Désignation",
                 dataIndex: "designation",
@@ -335,6 +379,29 @@ export const AchatsPage = () => {
               dataIndex: "montant_ttc",
               align: "right" as const,
               render: (v: any) => euro(v),
+            },
+            {
+              title: "Actions",
+              width: 170,
+              render: (_: any, r: any) => (
+                <Space>
+                  <Button size="small" onClick={() => editer(r.id)}>
+                    Modifier
+                  </Button>
+                  <Popconfirm
+                    title="Supprimer cette facture ?"
+                    description="Cette action est définitive."
+                    okText="Supprimer"
+                    cancelText="Annuler"
+                    okButtonProps={{ danger: true }}
+                    onConfirm={() => supprimer(r.id)}
+                  >
+                    <Button size="small" danger>
+                      Supprimer
+                    </Button>
+                  </Popconfirm>
+                </Space>
+              ),
             },
           ]}
         />
