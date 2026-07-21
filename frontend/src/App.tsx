@@ -6,6 +6,7 @@ import {
   UploadOutlined,
   RobotOutlined,
   ContainerOutlined,
+  PercentageOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -28,6 +29,7 @@ import { ThemeProvider } from "./theme";
 import { Dashboard } from "./pages/dashboard";
 import { CopilotPage } from "./pages/copilot";
 import { AchatsPage } from "./pages/achats";
+import { MargePage } from "./pages/marge";
 import { ImportsPage } from "./pages/imports";
 import { ProduitCreate, ProduitEdit, ProduitList } from "./pages/produits";
 import { FamilleCreate, FamilleEdit, FamilleList } from "./pages/familles";
@@ -63,6 +65,11 @@ function App() {
                 name: "achats",
                 list: "/achats",
                 meta: { label: "Achats", icon: <ContainerOutlined /> },
+              },
+              {
+                name: "marge",
+                list: "/marge",
+                meta: { label: "Marge", icon: <PercentageOutlined /> },
               },
               {
                 name: "imports",
@@ -116,6 +123,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="/copilot" element={<CopilotPage />} />
                 <Route path="/achats" element={<AchatsPage />} />
+                <Route path="/marge" element={<MargePage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/produits">
                   <Route index element={<ProduitList />} />
