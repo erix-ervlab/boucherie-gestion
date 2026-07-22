@@ -10,6 +10,8 @@ import {
   HistoryOutlined,
   LinkOutlined,
   AreaChartOutlined,
+  ScissorOutlined,
+  ExperimentOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -48,6 +50,8 @@ import {
   CorrespondanceEdit,
   CorrespondanceList,
 } from "./pages/correspondances";
+import { GammeCreate, GammeEdit, GammeList } from "./pages/gammes";
+import { RendementPage } from "./pages/rendement";
 
 const API_URL = "/api";
 
@@ -80,6 +84,11 @@ function App() {
                 name: "marge",
                 list: "/marge",
                 meta: { label: "Marge", icon: <PercentageOutlined /> },
+              },
+              {
+                name: "rendement",
+                list: "/rendement",
+                meta: { label: "Rendement", icon: <ExperimentOutlined /> },
               },
               {
                 name: "imports",
@@ -127,6 +136,16 @@ function App() {
                 edit: "/correspondances/edit/:id",
                 meta: { label: "Correspondances", icon: <LinkOutlined /> },
               },
+              {
+                name: "gammes",
+                list: "/gammes",
+                create: "/gammes/create",
+                edit: "/gammes/edit/:id",
+                meta: {
+                  label: "Gammes de découpe",
+                  icon: <ScissorOutlined />,
+                },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -154,6 +173,7 @@ function App() {
                 <Route path="/copilot" element={<CopilotPage />} />
                 <Route path="/achats" element={<AchatsPage />} />
                 <Route path="/marge" element={<MargePage />} />
+                <Route path="/rendement" element={<RendementPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/historique" element={<HistoriquePage />} />
                 <Route path="/exploration" element={<GrafanaPage />} />
@@ -176,6 +196,11 @@ function App() {
                   <Route index element={<CorrespondanceList />} />
                   <Route path="create" element={<CorrespondanceCreate />} />
                   <Route path="edit/:id" element={<CorrespondanceEdit />} />
+                </Route>
+                <Route path="/gammes">
+                  <Route index element={<GammeList />} />
+                  <Route path="create" element={<GammeCreate />} />
+                  <Route path="edit/:id" element={<GammeEdit />} />
                 </Route>
                 <Route path="*" element={<ErrorComponent />} />
               </Route>

@@ -112,6 +112,7 @@ class CorrespondanceBase(BaseModel):
     designation: str | None = None
     famille_id: int | None = None
     sous_famille_id: int | None = None
+    gamme_id: int | None = None
 
 
 class CorrespondanceCreate(CorrespondanceBase):
@@ -124,10 +125,42 @@ class CorrespondanceUpdate(BaseModel):
     designation: str | None = None
     famille_id: int | None = None
     sous_famille_id: int | None = None
+    gamme_id: int | None = None
 
 
 class CorrespondanceRead(_Read, CorrespondanceBase):
     id: int
+
+
+# --- Gammes de découpe (rendement, étape 6) ---
+class GammeSortieIn(BaseModel):
+    produit_id: int
+    rendement_pct: Decimal
+
+
+class GammeSortieRead(_Read):
+    id: int
+    produit_id: int
+    rendement_pct: Decimal
+    produit_nom: str | None = None
+    prix_vente: Decimal | None = None
+
+
+class GammeIn(BaseModel):
+    nom: str
+    note: str | None = None
+    actif: bool = True
+    sorties: list[GammeSortieIn] = []
+
+
+class GammeRead(_Read):
+    id: int
+    nom: str
+    note: str | None = None
+    actif: bool
+    sorties: list[GammeSortieRead] = []
+    rendement_total: Decimal | None = None
+    perte_pct: Decimal | None = None
 
 
 # --- Journal d'import (lecture seule côté API) ---

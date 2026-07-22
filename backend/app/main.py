@@ -6,12 +6,23 @@ ventes. Étape 1 du cahier des charges.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from . import models, schemas
 from .config import settings
 from .crud import make_crud_router
 from .db import engine
-from .routers import achats, copilot, imports, journal, marge, modeles, ventes
+from .routers import (
+    achats,
+    copilot,
+    gammes,
+    imports,
+    journal,
+    marge,
+    modeles,
+    rendement,
+    ventes,
+)
 
 app = FastAPI(title="Boucherie de l'Abbatiale — Gestion", version="0.1.0")
 
@@ -30,6 +41,16 @@ def _startup() -> None:
     # Dev uniquement : crée les tables. En prod, basculer sur Alembic.
     if settings.dev_create_all:
         models.Base.metadata.create_all(bind=engine)
+        # create_all n'ajoute pas les colonnes manquantes sur une table déjà
+        # créée : on ajoute gamme_id après coup, de façon idempotente.
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE correspondance_fournisseur "
+                    "ADD COLUMN IF NOT EXISTS gamme_id integer "
+                    "REFERENCES gamme_decoupe(id) ON DELETE SET NULL"
+                )
+            )
 
 
 @app.get("/health", tags=["meta"])
@@ -95,6 +116,10 @@ app.include_router(achats.router)
 
 # --- Marge par famille ---
 app.include_router(marge.router)
+
+# --- Gammes de découpe + rendement (Étape 6) ---
+app.include_router(gammes.router)
+app.include_router(rendement.router)
 
 # --- Journal d'audit ---
 app.include_router(journal.router)

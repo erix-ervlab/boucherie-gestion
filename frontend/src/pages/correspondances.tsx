@@ -21,8 +21,13 @@ function useRefs() {
     resource: "familles",
     pagination: { pageSize: 500 },
   });
+  const { data: gData } = useList({
+    resource: "gammes",
+    pagination: { pageSize: 500 },
+  });
   const fournisseurs = (fData?.data ?? []) as any[];
   const familles = (famData?.data ?? []) as any[];
+  const gammes = (gData?.data ?? []) as any[];
   const fmap = useMemo(
     () => Object.fromEntries(fournisseurs.map((f) => [f.id, f.nom])),
     [fournisseurs],
@@ -31,7 +36,11 @@ function useRefs() {
     () => Object.fromEntries(familles.map((f) => [f.id, f.nom])),
     [familles],
   );
-  return { fournisseurs, familles, fmap, famMap };
+  const gammeMap = useMemo(
+    () => Object.fromEntries(gammes.map((g) => [g.id, g.nom])),
+    [gammes],
+  );
+  return { fournisseurs, familles, gammes, fmap, famMap, gammeMap };
 }
 
 export const CorrespondanceList = () => {
@@ -39,7 +48,7 @@ export const CorrespondanceList = () => {
     syncWithLocation: true,
     sorters: { initial: [{ field: "reference_fournisseur", order: "asc" }] },
   });
-  const { fournisseurs, fmap, famMap } = useRefs();
+  const { fournisseurs, fmap, famMap, gammeMap } = useRefs();
   const [search, setSearch] = useState("");
   const [fourn, setFourn] = useState<number | undefined>();
 
@@ -92,6 +101,13 @@ export const CorrespondanceList = () => {
           }
         />
         <Table.Column
+          dataIndex="gamme_id"
+          title="Gamme (transformé)"
+          render={(v: number | null) =>
+            v ? <Tag color="geekblue">{gammeMap[v] ?? v}</Tag> : <Tag>direct</Tag>
+          }
+        />
+        <Table.Column
           title="Actions"
           dataIndex="actions"
           render={(_, record: any) => (
@@ -107,7 +123,7 @@ export const CorrespondanceList = () => {
 };
 
 const CorrespondanceForm = ({ formProps }: any) => {
-  const { fournisseurs, familles } = useRefs();
+  const { fournisseurs, familles, gammes } = useRefs();
   return (
     <Form {...formProps} layout="vertical">
       <Form.Item
@@ -137,6 +153,19 @@ const CorrespondanceForm = ({ formProps }: any) => {
           showSearch
           optionFilterProp="label"
           options={familles.map((f) => ({ value: f.id, label: f.nom }))}
+        />
+      </Form.Item>
+      <Form.Item
+        label="Gamme de découpe (si l'article est transformé en PLU)"
+        name="gamme_id"
+        tooltip="Laissez vide si l'article est vendu tel quel. Sinon, choisissez la gamme qui décrit son éclatement en PLU."
+      >
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="— vente directe —"
+          options={gammes.map((g) => ({ value: g.id, label: g.nom }))}
         />
       </Form.Item>
     </Form>

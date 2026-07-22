@@ -194,6 +194,11 @@ class CorrespondanceFournisseur(Base):
     designation: Mapped[str | None] = mapped_column(String(200))  # dernière vue
     famille_id: Mapped[int | None] = mapped_column(ForeignKey("famille.id"))
     sous_famille_id: Mapped[int | None] = mapped_column(ForeignKey("sous_famille.id"))
+    # Étape 6 : si la référence est un morceau transformé, la gamme de découpe
+    # qui l'éclate en PLU (rendement théorique). NULL = affectée directement.
+    gamme_id: Mapped[int | None] = mapped_column(
+        ForeignKey("gamme_decoupe.id", ondelete="SET NULL")
+    )
 
 
 class Achat(Base):
@@ -248,6 +253,53 @@ class AchatLigne(Base):
     sous_famille_id: Mapped[int | None] = mapped_column(ForeignKey("sous_famille.id"))
 
     achat: Mapped[Achat] = relationship(back_populates="lignes")
+
+
+# =============================================================================
+# RENDEMENT / DÉCOUPE (Étape 6) — éclatement théorique d'un morceau acheté
+# en plusieurs PLU vendus. Indicatif, pas de traçabilité par lot.
+# =============================================================================
+
+
+class GammeDecoupe(Base):
+    """Recette d'éclatement théorique d'un morceau transformé.
+
+    Un morceau transformable (arrière de veau, agneau entier…) donne
+    plusieurs PLU selon des % de rendement paramétrés. Le reste
+    (100 − Σ rendements) est la perte (os, gras, chutes). Le lien avec les
+    achats se fait via CorrespondanceFournisseur.gamme_id : une référence
+    fournisseur marquée « transformable » pointe vers sa gamme, et la
+    production théorique est dérivée automatiquement des poids achetés.
+    """
+
+    __tablename__ = "gamme_decoupe"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nom: Mapped[str] = mapped_column(String(160), unique=True)
+    note: Mapped[str | None] = mapped_column(String(300))
+    actif: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+
+    sorties: Mapped[list["GammeSortie"]] = relationship(
+        back_populates="gamme", cascade="all, delete-orphan"
+    )
+
+
+class GammeSortie(Base):
+    """Un PLU produit par une gamme + son % de rendement (part du poids d'entrée)."""
+
+    __tablename__ = "gamme_sortie"
+    __table_args__ = (
+        UniqueConstraint("gamme_id", "produit_id", name="uq_gamme_sortie"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    gamme_id: Mapped[int] = mapped_column(
+        ForeignKey("gamme_decoupe.id", ondelete="CASCADE"), index=True
+    )
+    produit_id: Mapped[int] = mapped_column(ForeignKey("produit.id"))
+    rendement_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+
+    gamme: Mapped[GammeDecoupe] = relationship(back_populates="sorties")
 
 
 # =============================================================================
