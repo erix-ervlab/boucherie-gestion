@@ -12,6 +12,12 @@ import {
   AreaChartOutlined,
   ScissorOutlined,
   ExperimentOutlined,
+  FundOutlined,
+  ShoppingOutlined,
+  ProfileOutlined,
+  DatabaseOutlined,
+  QuestionCircleOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import { Refine } from "@refinedev/core";
 import {
@@ -52,6 +58,7 @@ import {
 } from "./pages/correspondances";
 import { GammeCreate, GammeEdit, GammeList } from "./pages/gammes";
 import { RendementPage } from "./pages/rendement";
+import { DocumentationPage } from "./pages/documentation";
 
 const API_URL = "/api";
 
@@ -65,76 +72,94 @@ function App() {
             routerProvider={routerBindings}
             notificationProvider={useNotificationProvider}
             resources={[
+              // ── Pilotage ─────────────────────────────────────────────
+              {
+                name: "grp_pilotage",
+                meta: { label: "Pilotage", icon: <FundOutlined /> },
+              },
               {
                 name: "dashboard",
                 list: "/",
-                meta: { label: "Tableau de bord", icon: <DashboardOutlined /> },
+                meta: {
+                  parent: "grp_pilotage",
+                  label: "Tableau de bord",
+                  icon: <DashboardOutlined />,
+                },
               },
               {
                 name: "copilot",
                 list: "/copilot",
-                meta: { label: "Copilote", icon: <RobotOutlined /> },
-              },
-              {
-                name: "achats",
-                list: "/achats",
-                meta: { label: "Achats", icon: <ContainerOutlined /> },
+                meta: {
+                  parent: "grp_pilotage",
+                  label: "Copilote",
+                  icon: <RobotOutlined />,
+                },
               },
               {
                 name: "marge",
                 list: "/marge",
-                meta: { label: "Marge", icon: <PercentageOutlined /> },
+                meta: {
+                  parent: "grp_pilotage",
+                  label: "Marge",
+                  icon: <PercentageOutlined />,
+                },
               },
               {
                 name: "rendement",
                 list: "/rendement",
-                meta: { label: "Rendement", icon: <ExperimentOutlined /> },
-              },
-              {
-                name: "imports",
-                list: "/imports",
-                meta: { label: "Import caisse", icon: <UploadOutlined /> },
-              },
-              {
-                name: "historique",
-                list: "/historique",
-                meta: { label: "Historique", icon: <HistoryOutlined /> },
+                meta: {
+                  parent: "grp_pilotage",
+                  label: "Rendement",
+                  icon: <ExperimentOutlined />,
+                },
               },
               {
                 name: "exploration",
                 list: "/exploration",
                 meta: {
+                  parent: "grp_pilotage",
                   label: "Exploration (Grafana)",
                   icon: <AreaChartOutlined />,
                 },
               },
+              // ── Achats & fournisseurs ────────────────────────────────
               {
-                name: "produits",
-                list: "/produits",
-                create: "/produits/create",
-                edit: "/produits/edit/:id",
-                meta: { label: "Produits (PLU)", icon: <ShopOutlined /> },
+                name: "grp_achats",
+                meta: {
+                  label: "Achats & fournisseurs",
+                  icon: <ShoppingOutlined />,
+                },
               },
               {
-                name: "familles",
-                list: "/familles",
-                create: "/familles/create",
-                edit: "/familles/edit/:id",
-                meta: { label: "Familles", icon: <AppstoreOutlined /> },
+                name: "achats",
+                list: "/achats",
+                meta: {
+                  parent: "grp_achats",
+                  label: "Achats",
+                  icon: <ContainerOutlined />,
+                },
               },
               {
                 name: "fournisseurs",
                 list: "/fournisseurs",
                 create: "/fournisseurs/create",
                 edit: "/fournisseurs/edit/:id",
-                meta: { label: "Fournisseurs", icon: <TeamOutlined /> },
+                meta: {
+                  parent: "grp_achats",
+                  label: "Fournisseurs",
+                  icon: <TeamOutlined />,
+                },
               },
               {
                 name: "correspondances",
                 list: "/correspondances",
                 create: "/correspondances/create",
                 edit: "/correspondances/edit/:id",
-                meta: { label: "Correspondances", icon: <LinkOutlined /> },
+                meta: {
+                  parent: "grp_achats",
+                  label: "Correspondances",
+                  icon: <LinkOutlined />,
+                },
               },
               {
                 name: "gammes",
@@ -142,8 +167,76 @@ function App() {
                 create: "/gammes/create",
                 edit: "/gammes/edit/:id",
                 meta: {
+                  parent: "grp_achats",
                   label: "Gammes de découpe",
                   icon: <ScissorOutlined />,
+                },
+              },
+              // ── Catalogue ────────────────────────────────────────────
+              {
+                name: "grp_catalogue",
+                meta: { label: "Catalogue", icon: <ProfileOutlined /> },
+              },
+              {
+                name: "produits",
+                list: "/produits",
+                create: "/produits/create",
+                edit: "/produits/edit/:id",
+                meta: {
+                  parent: "grp_catalogue",
+                  label: "Produits (PLU)",
+                  icon: <ShopOutlined />,
+                },
+              },
+              {
+                name: "familles",
+                list: "/familles",
+                create: "/familles/create",
+                edit: "/familles/edit/:id",
+                meta: {
+                  parent: "grp_catalogue",
+                  label: "Familles",
+                  icon: <AppstoreOutlined />,
+                },
+              },
+              // ── Données & journal ────────────────────────────────────
+              {
+                name: "grp_donnees",
+                meta: {
+                  label: "Données & journal",
+                  icon: <DatabaseOutlined />,
+                },
+              },
+              {
+                name: "imports",
+                list: "/imports",
+                meta: {
+                  parent: "grp_donnees",
+                  label: "Import caisse",
+                  icon: <UploadOutlined />,
+                },
+              },
+              {
+                name: "historique",
+                list: "/historique",
+                meta: {
+                  parent: "grp_donnees",
+                  label: "Historique",
+                  icon: <HistoryOutlined />,
+                },
+              },
+              // ── Aide ─────────────────────────────────────────────────
+              {
+                name: "grp_aide",
+                meta: { label: "Aide", icon: <QuestionCircleOutlined /> },
+              },
+              {
+                name: "documentation",
+                list: "/documentation",
+                meta: {
+                  parent: "grp_aide",
+                  label: "Documentation",
+                  icon: <ReadOutlined />,
                 },
               },
             ]}
@@ -177,6 +270,7 @@ function App() {
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/historique" element={<HistoriquePage />} />
                 <Route path="/exploration" element={<GrafanaPage />} />
+                <Route path="/documentation" element={<DocumentationPage />} />
                 <Route path="/produits">
                   <Route index element={<ProduitList />} />
                   <Route path="create" element={<ProduitCreate />} />
