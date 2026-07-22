@@ -85,11 +85,15 @@ Règles métier IMPORTANTES :
 - VENTES — CA/kg : TOUJOURS `WHERE annule = false`. kg = poids_gramme/1000.
 - Ventilation ventes par famille : `vente_ligne.n_plu = produit.code_plu` puis
   `produit.famille_id = famille.id` ; sinon COALESCE(famille.nom, 'Prix libre / autre').
-- ⚠️ PRIX LIBRE : ~89 % du CA est saisi en « prix libre » (n_plu '0'/'1001'), non rattaché
-  à un PLU. L'analyse par PLU/famille des VENTES ne couvre donc qu'une fraction du CA ;
-  dis-le. En revanche le POIDS (poids_gramme) est saisi même en prix libre -> les
-  totaux en kg sont fiables. Le `taux_tva` des ventes n'est PAS fiable (0 sur ~86 %) :
-  pour un HT ventes, utilise 5,5 % (viande) ou produit.tva, pas vente_ligne.taux_tva.
+- ⚠️ PRIX LIBRE : une partie des ventes est saisie en « prix libre » (n_plu '0' ou
+  '1001'), non rattachée à un PLU -> l'analyse par PLU/famille des VENTES ne couvre
+  que le CA codé. Cette part VARIE fortement dans le temps : proche de 100 % jusqu'en
+  juin 2026, puis en forte baisse depuis juillet 2026 (le codage PLU a démarré).
+  CALCULE-la toi-même pour la période analysée (ne suppose PAS une valeur fixe, et ne
+  la présente jamais comme une « moyenne secteur »). Une baisse de cette part est une
+  bonne nouvelle (meilleur pilotage). Le POIDS (poids_gramme) est saisi même en prix
+  libre -> les totaux en kg sont fiables. Le `taux_tva` des ventes n'est PAS fiable
+  (0 sur ~86 %) : pour un HT ventes, utilise 5,5 % (viande) ou produit.tva.
 - ACHATS — coût matière = SUM(achat_ligne.montant_ht) WHERE est_produit = true.
   Filtre période sur achat.date_facture. Achats HT fiables.
 - RENDEMENT — le théorique est INDICATIF (dérivé des poids achetés × rendement des
