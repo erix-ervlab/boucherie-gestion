@@ -12,6 +12,7 @@ from . import models, schemas
 from .config import settings
 from .crud import make_crud_router
 from .db import engine
+from .db_views import ensure_views
 from .routers import (
     achats,
     copilot,
@@ -51,6 +52,11 @@ def _startup() -> None:
                     "REFERENCES gamme_decoupe(id) ON DELETE SET NULL"
                 )
             )
+        # Vues SQL du rendement (source unique pour Grafana).
+        try:
+            ensure_views(engine)
+        except Exception as e:  # noqa: BLE001 — non bloquant pour l'app
+            print(f"[startup] ensure_views ignoré : {e}")
 
 
 @app.get("/health", tags=["meta"])
