@@ -35,7 +35,7 @@ export const AchatsPage = () => {
   const [saving, setSaving] = useState(false);
   const [achats, setAchats] = useState<any[]>([]);
   const timerRef = useRef<any>(null);
-  const { modeles, modele, setModele } = useModele();
+  const { modeles, modele, setModele } = useModele("facture");
 
   const { data: famData } = useList({ resource: "familles", pagination: { mode: "off" } });
   const familles = famData?.data ?? [];

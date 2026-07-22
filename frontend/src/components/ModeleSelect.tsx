@@ -1,30 +1,37 @@
 import { useEffect, useState } from "react";
 import { Select } from "antd";
 
-/** Charge les modèles IA disponibles et mémorise le choix (localStorage,
- *  partagé entre le copilote et la lecture de factures). */
-export function useModele() {
+/** Charge les modèles IA d'un usage donné ('facture' ou 'copilot') et mémorise
+ *  le choix (localStorage propre à chaque usage). Le choix mémorisé est
+ *  revalidé contre la liste autorisée (sinon on retombe sur le défaut). */
+export function useModele(usage: string) {
   const [modeles, setModeles] = useState<any[]>([]);
+  const [defaut, setDefaut] = useState<string>("");
+  const key = `ia.modele.${usage}`;
   const [modele, setModeleState] = useState<string>(
-    () => localStorage.getItem("ia.modele") || "",
+    () => localStorage.getItem(key) || "",
   );
 
   useEffect(() => {
-    fetch("/api/modeles")
+    fetch(`/api/modeles?usage=${encodeURIComponent(usage)}`)
       .then((r) => r.json())
       .then((d) => {
+        const ids = (d.modeles || []).map((m: any) => m.id);
         setModeles(d.modeles || []);
-        setModeleState((cur) => cur || d.defaut || (d.modeles?.[0]?.id ?? ""));
+        setDefaut(d.defaut || "");
+        setModeleState((cur) =>
+          cur && ids.includes(cur) ? cur : d.defaut || ids[0] || "",
+        );
       })
       .catch(() => {});
-  }, []);
+  }, [usage]);
 
   const setModele = (v: string) => {
     setModeleState(v);
-    localStorage.setItem("ia.modele", v);
+    localStorage.setItem(key, v);
   };
 
-  return { modeles, modele, setModele };
+  return { modeles, modele, setModele, defaut };
 }
 
 export function ModeleSelect({

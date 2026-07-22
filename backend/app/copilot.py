@@ -171,7 +171,7 @@ def run_sql(sql: str) -> str:
 def chat(messages: list[dict], modele: str | None = None) -> dict:
     """Boucle agent : messages = historique [{role, content(str)}]. Renvoie la
     réponse finale + la liste des requêtes SQL exécutées (transparence)."""
-    model = resoudre(modele)
+    model = resoudre(modele, usage="copilot")
     convo: list[dict] = [
         {"role": m["role"], "content": m["content"]} for m in messages
     ]

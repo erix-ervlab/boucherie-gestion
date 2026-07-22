@@ -28,7 +28,7 @@ export const CopilotPage = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ configure: boolean; modele: string } | null>(null);
-  const { modeles, modele, setModele } = useModele();
+  const { modeles, modele, setModele } = useModele("copilot");
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,6 +150,16 @@ export const CopilotPage = () => {
         </Typography.Title>
         <ModeleSelect modeles={modeles} modele={modele} setModele={setModele} />
       </Space>
+
+      {modele === "claude-opus-4-8" && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="Opus 4.8 sélectionné — modèle coûteux"
+          description="Réservez-le aux demandes complexes (analyses détaillées, raisonnements poussés). Pour les questions courantes, Sonnet (par défaut) ou Haiku suffisent et coûtent bien moins cher."
+        />
+      )}
 
       {status && !status.configure && (
         <Alert

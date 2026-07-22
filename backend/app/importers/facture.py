@@ -143,7 +143,7 @@ def extraire(
     # (thinking adaptatif) avant d'émettre le JSON ; 8000 était épuisé par
     # la seule réflexion sur les grosses factures -> réponse vide.
     resp = _client.messages.create(
-        model=resoudre(modele),
+        model=resoudre(modele, usage="facture"),
         max_tokens=16000,
         system=system,
         output_config={"format": {"type": "json_schema", "schema": schema}},

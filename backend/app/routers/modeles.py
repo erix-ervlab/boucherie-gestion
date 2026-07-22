@@ -1,13 +1,13 @@
-"""Liste des modèles IA sélectionnables."""
+"""Liste des modèles IA sélectionnables (selon l'usage)."""
 
 from fastapi import APIRouter
 
-from ..config import settings
-from ..modeles import MODELES
+from ..modeles import liste
 
 router = APIRouter(tags=["modeles"])
 
 
 @router.get("/modeles")
-def modeles():
-    return {"modeles": MODELES, "defaut": settings.copilot_model}
+def modeles(usage: str | None = None):
+    """Modèles proposés + défaut. `usage` = 'facture' ou 'copilot'."""
+    return liste(usage)

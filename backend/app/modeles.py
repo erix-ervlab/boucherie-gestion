@@ -33,9 +33,36 @@ MODELES = [
 
 _PAR_ID = {m["id"]: m for m in MODELES}
 
+# Modèles autorisés + défaut PAR USAGE (maîtrise des coûts).
+# - facture (lecture IA) : Sonnet / Haiku uniquement, défaut Haiku (pas d'Opus).
+# - copilot : Opus / Sonnet / Haiku, défaut Sonnet (Opus = coûteux, sur demande).
+USAGES = {
+    "facture": {
+        "ids": ["claude-sonnet-5", "claude-haiku-4-5"],
+        "defaut": "claude-haiku-4-5",
+    },
+    "copilot": {
+        "ids": ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5"],
+        "defaut": "claude-sonnet-5",
+    },
+}
 
-def resoudre(modele: str | None) -> str:
-    """Renvoie un id de modèle valide (repli sur le modèle par défaut)."""
+
+def liste(usage: str | None = None) -> dict:
+    """Modèles proposés + défaut pour un usage donné (tout si usage inconnu)."""
+    cfg = USAGES.get(usage or "")
+    if cfg is None:
+        return {"modeles": MODELES, "defaut": settings.copilot_model}
+    modeles = [_PAR_ID[i] for i in cfg["ids"] if i in _PAR_ID]
+    return {"modeles": modeles, "defaut": cfg["defaut"]}
+
+
+def resoudre(modele: str | None, usage: str | None = None) -> str:
+    """Renvoie un id de modèle valide. Si `usage` est fourni, on impose la
+    restriction (repli sur le défaut de l'usage si le modèle n'est pas autorisé)."""
+    cfg = USAGES.get(usage or "")
+    if cfg is not None:
+        return modele if modele in cfg["ids"] else cfg["defaut"]
     return modele if modele in _PAR_ID else settings.copilot_model
 
 
