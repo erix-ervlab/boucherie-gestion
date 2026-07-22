@@ -16,19 +16,19 @@
         "name": "famille", "label": "Famille", "type": "query",
         "datasource": { "type": "postgres", "uid": "boucherie-pg" },
         "query": "SELECT DISTINCT famille FROM v_rendement_theorique WHERE famille IS NOT NULL ORDER BY 1",
-        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": {}, "options": []
+        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": { "selected": true, "text": ["All"], "value": ["$__all"] }, "options": []
       },
       {
         "name": "morceau", "label": "Morceau", "type": "query",
         "datasource": { "type": "postgres", "uid": "boucherie-pg" },
         "query": "SELECT DISTINCT morceau FROM v_rendement_theorique ORDER BY 1",
-        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": {}, "options": []
+        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": { "selected": true, "text": ["All"], "value": ["$__all"] }, "options": []
       },
       {
         "name": "fournisseur", "label": "Fournisseur", "type": "query",
         "datasource": { "type": "postgres", "uid": "boucherie-pg" },
         "query": "SELECT DISTINCT fournisseur FROM v_rendement_theorique WHERE fournisseur IS NOT NULL ORDER BY 1",
-        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": {}, "options": []
+        "refresh": 1, "sort": 1, "multi": true, "includeAll": true, "current": { "selected": true, "text": ["All"], "value": ["$__all"] }, "options": []
       }
     ]
   },
@@ -42,37 +42,37 @@
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(cout_alloc),0) AS cout FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(cout_alloc),0) AS cout FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 2, "type": "stat", "title": "Vendable théorique", "gridPos": { "h": 4, "w": 4, "x": 4, "y": 4 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(theo_kg),0) AS kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(theo_kg),0) AS kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 3, "type": "stat", "title": "CA potentiel", "gridPos": { "h": 4, "w": 4, "x": 8, "y": 4 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(ca_potentiel),0) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(ca_potentiel),0) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 4, "type": "stat", "title": "Marge potentielle", "gridPos": { "h": 4, "w": 4, "x": 12, "y": 4 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round((SUM(ca_potentiel)-SUM(cout_alloc))/NULLIF(SUM(ca_potentiel),0)*100,1) AS marge FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round((SUM(ca_potentiel)-SUM(cout_alloc))/NULLIF(SUM(ca_potentiel),0)*100,1) AS marge FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 5, "type": "stat", "title": "Coût de revient moyen /kg", "gridPos": { "h": 4, "w": 4, "x": 16, "y": 4 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 6, "type": "stat", "title": "Perte (os, gras, chutes)", "gridPos": { "h": 4, "w": 4, "x": 20, "y": 4 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "kg", "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(perte_kg),0) AS perte FROM v_rendement_morceau WHERE $__timeFilter(date_facture) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT COALESCE(SUM(perte_kg),0) AS perte FROM v_rendement_morceau WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]))" } ] },
 
     { "id": 101, "type": "row", "title": "Par axe d'analyse", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 } },
 
@@ -80,37 +80,37 @@
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 8, "type": "barchart", "title": "CA potentiel par morceau", "gridPos": { "h": 9, "w": 8, "x": 8, "y": 9 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "geekblue" } }, "overrides": [] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT morceau, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT morceau, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 9, "type": "barchart", "title": "CA potentiel par fournisseur", "gridPos": { "h": 9, "w": 8, "x": 16, "y": 9 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fournisseur, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT fournisseur, SUM(ca_potentiel) AS ca FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 10, "type": "barchart", "title": "Coût de revient /kg par famille", "gridPos": { "h": 9, "w": 8, "x": 0, "y": 18 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "yellow" } }, "overrides": [] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_kg FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 11, "type": "barchart", "title": "Marge potentielle € par famille", "gridPos": { "h": 9, "w": 8, "x": 8, "y": 18 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "currencyEUR", "color": { "mode": "fixed", "fixedColor": "purple" } }, "overrides": [] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": false } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, SUM(ca_potentiel)-SUM(cout_alloc) AS marge FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT famille, SUM(ca_potentiel)-SUM(cout_alloc) AS marge FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 12, "type": "barchart", "title": "Vendable vs perte par morceau", "gridPos": { "h": 9, "w": 8, "x": 16, "y": 18 },
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": { "unit": "kg", "custom": { "stacking": { "mode": "normal", "group": "A" } } }, "overrides": [ { "matcher": { "id": "byName", "options": "perte" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }, { "matcher": { "id": "byName", "options": "vendable" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] } ] },
       "options": { "orientation": "horizontal", "showValue": "auto", "legend": { "showLegend": true, "placement": "bottom" } },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT morceau, round(SUM(vendable_kg),1) AS vendable, round(SUM(perte_kg),1) AS perte FROM v_rendement_morceau WHERE $__timeFilter(date_facture) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1 ORDER BY 2 DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT morceau, round(SUM(vendable_kg),1) AS vendable, round(SUM(perte_kg),1) AS perte FROM v_rendement_morceau WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1 ORDER BY 2 DESC" } ] },
 
     { "id": 102, "type": "row", "title": "Détail par PLU produit", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 } },
 
@@ -118,7 +118,7 @@
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "cout_revient_kg" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "prix_vente" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "ca_potentiel" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "theo_kg" }, "properties": [ { "id": "unit", "value": "kg" } ] }, { "matcher": { "id": "byName", "options": "marge_pct" }, "properties": [ { "id": "unit", "value": "percent" }, { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-RdYlGr" } } ] } ] },
       "options": { "showHeader": true, "sortBy": [ { "displayName": "ca_potentiel", "desc": true } ] },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT produit, famille, string_agg(DISTINCT morceau, ', ') AS morceaux, round(SUM(theo_kg),1) AS theo_kg, round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_revient_kg, round(max(prix_vente),2) AS prix_vente, round((SUM(ca_potentiel)-SUM(cout_alloc))/NULLIF(SUM(ca_potentiel),0)*100,1) AS marge_pct, round(SUM(ca_potentiel),0) AS ca_potentiel FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY produit, famille ORDER BY ca_potentiel DESC" } ] },
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "SELECT produit, famille, string_agg(DISTINCT morceau, ', ') AS morceaux, round(SUM(theo_kg),1) AS theo_kg, round(SUM(cout_alloc)/NULLIF(SUM(theo_kg),0),2) AS cout_revient_kg, round(max(prix_vente),2) AS prix_vente, round((SUM(ca_potentiel)-SUM(cout_alloc))/NULLIF(SUM(ca_potentiel),0)*100,1) AS marge_pct, round(SUM(ca_potentiel),0) AS ca_potentiel FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY produit, famille ORDER BY ca_potentiel DESC" } ] },
 
     { "id": 103, "type": "row", "title": "Théorique vs réel (filtre Famille)", "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 } },
 
@@ -126,6 +126,6 @@
       "datasource": { "type": "postgres", "uid": "boucherie-pg" },
       "fieldConfig": { "defaults": {}, "overrides": [ { "matcher": { "id": "byName", "options": "theo_kg" }, "properties": [ { "id": "unit", "value": "kg" } ] }, { "matcher": { "id": "byName", "options": "vendu_kg" }, "properties": [ { "id": "unit", "value": "kg" } ] }, { "matcher": { "id": "byName", "options": "ca_potentiel" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "ca_reel" }, "properties": [ { "id": "unit", "value": "currencyEUR" } ] }, { "matcher": { "id": "byName", "options": "ecoule_pct" }, "properties": [ { "id": "unit", "value": "percent" }, { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-BlYlRd" } } ] } ] },
       "options": { "showHeader": true, "sortBy": [ { "displayName": "ca_potentiel", "desc": true } ] },
-      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "WITH t AS (SELECT produit_id, produit, famille, SUM(theo_kg) theo_kg, SUM(ca_potentiel) ca_pot FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) AND morceau = ANY(ARRAY[${morceau:sqlstring}]::text[]) AND fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[]) GROUP BY 1,2,3), v AS (SELECT produit_id, SUM(vendu_kg) vendu_kg, SUM(vendu_ca) vendu_ca FROM v_ventes_plu WHERE $__timeFilter(date_vente) AND famille = ANY(ARRAY[${famille:sqlstring}]::text[]) GROUP BY 1) SELECT t.produit, t.famille, round(t.theo_kg,1) AS theo_kg, round(COALESCE(v.vendu_kg,0),1) AS vendu_kg, round(COALESCE(v.vendu_kg,0)/NULLIF(t.theo_kg,0)*100,0) AS ecoule_pct, round(t.ca_pot,0) AS ca_potentiel, round(COALESCE(v.vendu_ca,0),0) AS ca_reel FROM t LEFT JOIN v ON v.produit_id=t.produit_id ORDER BY ca_potentiel DESC" } ] }
+      "targets": [ { "refId": "A", "datasource": { "type": "postgres", "uid": "boucherie-pg" }, "format": "table", "rawSql": "WITH t AS (SELECT produit_id, produit, famille, SUM(theo_kg) theo_kg, SUM(ca_potentiel) ca_pot FROM v_rendement_theorique WHERE $__timeFilter(date_facture) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) AND (cardinality(ARRAY[${morceau:sqlstring}]::text[])=0 OR morceau = ANY(ARRAY[${morceau:sqlstring}]::text[])) AND (cardinality(ARRAY[${fournisseur:sqlstring}]::text[])=0 OR fournisseur = ANY(ARRAY[${fournisseur:sqlstring}]::text[])) GROUP BY 1,2,3), v AS (SELECT produit_id, SUM(vendu_kg) vendu_kg, SUM(vendu_ca) vendu_ca FROM v_ventes_plu WHERE $__timeFilter(date_vente) AND (cardinality(ARRAY[${famille:sqlstring}]::text[])=0 OR famille = ANY(ARRAY[${famille:sqlstring}]::text[])) GROUP BY 1) SELECT t.produit, t.famille, round(t.theo_kg,1) AS theo_kg, round(COALESCE(v.vendu_kg,0),1) AS vendu_kg, round(COALESCE(v.vendu_kg,0)/NULLIF(t.theo_kg,0)*100,0) AS ecoule_pct, round(t.ca_pot,0) AS ca_potentiel, round(COALESCE(v.vendu_ca,0),0) AS ca_reel FROM t LEFT JOIN v ON v.produit_id=t.produit_id ORDER BY ca_potentiel DESC" } ] }
   ]
 }
