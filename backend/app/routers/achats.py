@@ -29,6 +29,9 @@ class LigneIn(BaseModel):
     est_produit: bool = True
     famille_id: int | None = None
     sous_famille_id: int | None = None
+    # Gamme de découpe si la référence est transformée (mémorisée dans la
+    # correspondance, PAS stockée sur la ligne d'achat).
+    gamme_id: int | None = None
 
 
 class AchatIn(BaseModel):
@@ -67,6 +70,9 @@ def _apprendre(db: Session, fournisseur_id: int, lignes: list[LigneIn]) -> int:
             corr.famille_id = l.famille_id
             corr.sous_famille_id = l.sous_famille_id
             corr.designation = l.designation
+            # Le brouillon est pré-rempli avec la gamme actuelle : on la
+            # reflète (préserve si inchangée, met à jour / efface sinon).
+            corr.gamme_id = l.gamme_id
     return nouveaux
 
 
@@ -133,7 +139,7 @@ def creer(payload: AchatIn, db: Session = Depends(get_db)):
         statut="valide",
     )
     for l in payload.lignes:
-        achat.lignes.append(AchatLigne(**l.model_dump()))
+        achat.lignes.append(AchatLigne(**l.model_dump(exclude={"gamme_id"})))
     db.add(achat)
     db.flush()
 
@@ -200,7 +206,7 @@ def modifier(achat_id: int, payload: AchatIn, db: Session = Depends(get_db)):
     achat.lignes.clear()
     db.flush()
     for l in payload.lignes:
-        achat.lignes.append(AchatLigne(**l.model_dump()))
+        achat.lignes.append(AchatLigne(**l.model_dump(exclude={"gamme_id"})))
     db.flush()
 
     appris = _apprendre(db, fournisseur.id, payload.lignes)
@@ -254,6 +260,13 @@ def detail(achat_id: int, db: Session = Depends(get_db)):
     if a is None:
         raise HTTPException(404, "Achat introuvable")
     f = db.get(Fournisseur, a.fournisseur_id)
+    # gamme_id vit sur la correspondance, pas la ligne : on le rapatrie par réf.
+    gamme_par_ref = {
+        c.reference_fournisseur: c.gamme_id
+        for c in db.query(CorrespondanceFournisseur).filter_by(
+            fournisseur_id=a.fournisseur_id
+        )
+    }
     return {
         "id": a.id,
         "fournisseur": f.nom if f else None,
@@ -276,6 +289,7 @@ def detail(achat_id: int, db: Session = Depends(get_db)):
                 "est_produit": l.est_produit,
                 "famille_id": l.famille_id,
                 "sous_famille_id": l.sous_famille_id,
+                "gamme_id": gamme_par_ref.get(l.reference_fournisseur),
                 "numero_lot": l.numero_lot,
                 "origine": l.origine,
             }

@@ -191,6 +191,7 @@ def extraire(
         if c:  # affectation déjà apprise pour ce fournisseur -> fiable
             ligne["famille_id"] = c.famille_id
             ligne["sous_famille_id"] = c.sous_famille_id
+            ligne["gamme_id"] = c.gamme_id
             ligne["connu"] = True
             ligne["suggere"] = False
         else:  # sinon, suggestion de l'IA d'après la désignation
@@ -198,6 +199,7 @@ def extraire(
             fid = nom_to_id.get(sug.lower()) if sug and sug.lower() != "aucune" else None
             ligne["famille_id"] = fid
             ligne["sous_famille_id"] = None
+            ligne["gamme_id"] = None
             ligne["connu"] = False
             ligne["suggere"] = bool(fid)
 

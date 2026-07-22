@@ -44,6 +44,10 @@ export const AchatsPage = () => {
   const { data: fourData } = useList({ resource: "fournisseurs", pagination: { mode: "off" } });
   const fournisseurs = fourData?.data ?? [];
 
+  const { data: gammeData } = useList({ resource: "gammes", pagination: { mode: "off" } });
+  const gammes = gammeData?.data ?? [];
+  const gammeOptions = gammes.map((g: any) => ({ label: g.nom, value: g.id }));
+
   const loadAchats = () =>
     fetch("/api/achats")
       .then((r) => r.json())
@@ -127,6 +131,7 @@ export const AchatsPage = () => {
           est_produit: l.est_produit,
           famille_id: l.est_produit ? l.famille_id ?? null : null,
           sous_famille_id: null,
+          gamme_id: l.est_produit ? l.gamme_id ?? null : null,
         })),
       };
       const r = await fetch(editId ? `/api/achats/${editId}` : "/api/achats", {
@@ -365,7 +370,11 @@ export const AchatsPage = () => {
                     checked={r.est_produit}
                     size="small"
                     onChange={(v) =>
-                      setLigne(r._i, { est_produit: v, famille_id: v ? r.famille_id : null })
+                      setLigne(r._i, {
+                        est_produit: v,
+                        famille_id: v ? r.famille_id : null,
+                        gamme_id: v ? r.gamme_id : null,
+                      })
                     }
                   />
                 ),
@@ -388,6 +397,26 @@ export const AchatsPage = () => {
                     />
                   ) : (
                     <Tag>frais / non-produit</Tag>
+                  ),
+              },
+              {
+                title: "Gamme (si transformé)",
+                width: 200,
+                render: (_: any, r: any) =>
+                  r.est_produit ? (
+                    <Select
+                      value={r.gamme_id ?? undefined}
+                      onChange={(v) => setLigne(r._i, { gamme_id: v ?? null })}
+                      options={gammeOptions}
+                      placeholder="— vente directe —"
+                      allowClear
+                      showSearch
+                      optionFilterProp="label"
+                      size="small"
+                      style={{ width: 190 }}
+                    />
+                  ) : (
+                    <span style={{ color: "#999" }}>—</span>
                   ),
               },
             ]}
