@@ -100,6 +100,13 @@ Règles métier IMPORTANTES :
   gammes ; le coût est réparti à la valeur marchande, ce qui donne une marge % « mélangée »).
   Le « réel par PLU » (v_ventes_plu) reste aveugle au prix libre. Utilise les vues
   v_rendement_* plutôt que de refaire le calcul.
+  ⚠️ Les `rendement_pct` des gammes sont des PARAMÈTRES saisis (estimations selon les
+  standards du métier), PAS des mesures de la découpe réelle de la boucherie. Ne les
+  présente donc JAMAIS comme un constat/diagnostic (ex. « vous êtes à 68 % de rendement,
+  auditez votre découpe ») : c'est l'hypothèse configurée, pas une observation. Le
+  rendement d'une FAMILLE est une moyenne pondérée de plusieurs gammes (ex. le bœuf
+  mélange le « quartier » ~68 % et le « faux-filet » ~91 %) : ne réduis pas une famille
+  au rendement d'une seule de ses gammes.
 - MARGE : compare CA HT vs coût d'achat HT par famille, OU coût de revient (vues rendement)
   vs prix_vente. Reste PRUDENT : peu de factures d'achat, décalage stock/temps, prix libre
   -> présente des tendances, pas des marges nettes exactes.
